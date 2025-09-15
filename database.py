@@ -201,11 +201,43 @@ def initialize_database() -> None:
         """,
         """
         ALTER TABLE sealed_products
+        ADD COLUMN IF NOT EXISTS name TEXT;
+        """,
+        """
+        ALTER TABLE sealed_products
+        ADD COLUMN IF NOT EXISTS set_code TEXT;
+        """,
+        """
+        ALTER TABLE sealed_products
+        ADD COLUMN IF NOT EXISTS product_type TEXT;
+        """,
+        """
+        ALTER TABLE sealed_products
         ADD COLUMN IF NOT EXISTS acquisition_price NUMERIC(12, 2) NOT NULL DEFAULT 0;
         """,
         """
         ALTER TABLE sealed_products
         ADD COLUMN IF NOT EXISTS market_price NUMERIC(12, 2) NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE sealed_products
+        ADD COLUMN IF NOT EXISTS quantity INTEGER NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE sealed_products
+        ADD COLUMN IF NOT EXISTS acquired_at DATE;
+        """,
+        """
+        ALTER TABLE sealed_products
+        ADD COLUMN IF NOT EXISTS notes TEXT;
+        """,
+        """
+        ALTER TABLE sealed_products
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW();
+        """,
+        """
+        ALTER TABLE sealed_products
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW();
         """,
     ]
 

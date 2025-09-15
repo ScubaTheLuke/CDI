@@ -2,7 +2,7 @@ import os
 from contextlib import contextmanager
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -21,7 +21,22 @@ def _connection_params() -> Dict[str, Any]:
     }
 
 
+def _database_url() -> Optional[str]:
+    url = os.getenv("DATABASE_URL")
+    if url:
+        return url
+    return None
+
+
 def get_connection():
+    url = _database_url()
+    if url:
+        extra_kwargs: Dict[str, Any] = {}
+        sslmode = os.getenv("DB_SSLMODE", "require")
+        if sslmode and "sslmode=" not in url:
+            extra_kwargs["sslmode"] = sslmode
+        return psycopg2.connect(url, **extra_kwargs)
+
     params = _connection_params()
     missing = [key for key, value in params.items() if not value]
     if missing:
@@ -143,7 +158,23 @@ def initialize_database() -> None:
             unit_cost NUMERIC(12, 2) NOT NULL,
             total_cost NUMERIC(14, 2) NOT NULL
         );
+        """,
         """
+        ALTER TABLE inventory_cards
+        ADD COLUMN IF NOT EXISTS acquisition_price NUMERIC(12, 2) NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE inventory_cards
+        ADD COLUMN IF NOT EXISTS market_price NUMERIC(12, 2) NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE sealed_products
+        ADD COLUMN IF NOT EXISTS acquisition_price NUMERIC(12, 2) NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE sealed_products
+        ADD COLUMN IF NOT EXISTS market_price NUMERIC(12, 2) NOT NULL DEFAULT 0;
+        """,
     ]
 
     with connection_cursor(commit=True) as cur:

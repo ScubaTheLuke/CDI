@@ -150,6 +150,15 @@ def initialize_database() -> None:
         );
         """,
         """
+        CREATE TABLE IF NOT EXISTS sale_supplies (
+            id SERIAL PRIMARY KEY,
+            sale_event_id INTEGER NOT NULL REFERENCES sale_events(id) ON DELETE CASCADE,
+            supply_batch_id INTEGER NOT NULL REFERENCES shipping_supply_batches(id),
+            quantity_used INTEGER NOT NULL,
+            unit_cost NUMERIC(12, 2) NOT NULL,
+            total_cost NUMERIC(14, 2) NOT NULL
+        );
+        """,
         """
         ALTER TABLE sale_events
         ADD COLUMN IF NOT EXISTS customer_shipping_charged NUMERIC(12, 2) NOT NULL DEFAULT 0;
@@ -181,15 +190,6 @@ def initialize_database() -> None:
         """
         ALTER TABLE sale_events
         ADD COLUMN IF NOT EXISTS notes TEXT;
-        """,
-        CREATE TABLE IF NOT EXISTS sale_supplies (
-            id SERIAL PRIMARY KEY,
-            sale_event_id INTEGER NOT NULL REFERENCES sale_events(id) ON DELETE CASCADE,
-            supply_batch_id INTEGER NOT NULL REFERENCES shipping_supply_batches(id),
-            quantity_used INTEGER NOT NULL,
-            unit_cost NUMERIC(12, 2) NOT NULL,
-            total_cost NUMERIC(14, 2) NOT NULL
-        );
         """,
         """
         ALTER TABLE inventory_cards

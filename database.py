@@ -150,6 +150,38 @@ def initialize_database() -> None:
         );
         """,
         """
+        """
+        ALTER TABLE sale_events
+        ADD COLUMN IF NOT EXISTS customer_shipping_charged NUMERIC(12, 2) NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE sale_events
+        ADD COLUMN IF NOT EXISTS actual_postage_cost NUMERIC(12, 2) NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE sale_events
+        ADD COLUMN IF NOT EXISTS platform_fees NUMERIC(12, 2) NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE sale_events
+        ADD COLUMN IF NOT EXISTS total_sale_amount NUMERIC(14, 2) NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE sale_events
+        ADD COLUMN IF NOT EXISTS total_cost_of_goods NUMERIC(14, 2) NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE sale_events
+        ADD COLUMN IF NOT EXISTS total_supplies_cost_for_sale NUMERIC(14, 2) NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE sale_events
+        ADD COLUMN IF NOT EXISTS total_profit_loss NUMERIC(14, 2) NOT NULL DEFAULT 0;
+        """,
+        """
+        ALTER TABLE sale_events
+        ADD COLUMN IF NOT EXISTS notes TEXT;
+        """,
         CREATE TABLE IF NOT EXISTS sale_supplies (
             id SERIAL PRIMARY KEY,
             sale_event_id INTEGER NOT NULL REFERENCES sale_events(id) ON DELETE CASCADE,

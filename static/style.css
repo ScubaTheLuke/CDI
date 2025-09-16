@@ -496,3 +496,77 @@ button.link {
         align-items: flex-start;
     }
 }
+.card-name-cell {
+    min-width: 18rem;
+}
+
+.card-name-wrap {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.card-thumb {
+    width: 75px;
+    height: auto;
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    flex-shrink: 0;
+}
+
+.card-name-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-width: 420px;
+}
+
+.card-name-title a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.card-name-title a:hover,
+.card-name-title a:focus {
+    text-decoration: underline;
+}
+
+.card-name-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.card-oracle-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    max-height: 5.4em;
+    overflow: hidden;
+}
+
+.market-cell {
+    min-width: 12rem;
+}
+
+.market-price-live {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.market-price-live.muted {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.market-price-variant,
+.market-price-stored {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.muted {
+    color: var(--text-muted);
+}

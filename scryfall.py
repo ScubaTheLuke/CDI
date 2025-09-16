@@ -54,14 +54,17 @@ class ScryfallClient:
             "id": card.get("id"),
             "name": card.get("name"),
             "set_code": card.get("set"),
+            "set_name": card.get("set_name"),
             "collector_number": card.get("collector_number"),
             "rarity": card.get("rarity"),
+            "released_at": card.get("released_at"),
             "prices": card.get("prices", {}),
             "image": self._preferred_image_uri(card),
             "set_image": self._set_symbol_uri(card),
             "oracle_text": card.get("oracle_text"),
             "type_line": card.get("type_line"),
             "mana_cost": card.get("mana_cost"),
+            "scryfall_uri": card.get("scryfall_uri"),
         }
 
     def _preferred_image_uri(self, card: Dict[str, Any]) -> Optional[str]:

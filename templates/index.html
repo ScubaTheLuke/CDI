@@ -90,12 +90,12 @@
                         <thead>
                             <tr>
                                 <th><input type="checkbox" id="card-select-all"></th>
-                                <th>Name</th>
+                                <th>Card</th>
                                 <th>Set</th>
                                 <th>#</th>
                                 <th>Qty</th>
                                 <th>Buy</th>
-                                <th>Market</th>
+                                <th>Live Market</th>
                                 <th>Condition</th>
                                 <th>Language</th>
                                 <th>Foil</th>
@@ -107,12 +107,58 @@
                             {% for card in cards %}
                             <tr data-name="{{ card.name|lower }}" data-set="{{ card.set_code|default('')|lower }}" data-notes="{{ card.notes|default('')|lower }}">
                                 <td><input type="checkbox" class="card-select" value="{{ card.id }}"></td>
-                                <td>{{ card.name }}</td>
+                                <td class="card-name-cell">
+                                    <div class="card-name-wrap">
+                                        {% if card.scryfall_image %}
+                                        <img src="{{ card.scryfall_image }}" alt="{{ card.name }}" class="card-thumb">
+                                        {% endif %}
+                                        <div class="card-name-details">
+                                            <div class="card-name-title">
+                                                {% if card.scryfall_url %}
+                                                <a href="{{ card.scryfall_url }}" target="_blank" rel="noopener">{{ card.name }}</a>
+                                                {% else %}
+                                                {{ card.name }}
+                                                {% endif %}
+                                            </div>
+                                            <div class="card-name-meta">
+                                                {% if card.scryfall_set_name %}
+                                                <span class="card-set-name">{{ card.scryfall_set_name }}{% if card.scryfall_details and card.scryfall_details.rarity %} • {{ card.scryfall_details.rarity|title }}{% endif %}</span>
+                                                {% elif card.set_code %}
+                                                <span class="card-set-name">Set: {{ card.set_code }}</span>
+                                                {% endif %}
+                                                {% if card.scryfall_type_line %}
+                                                <span class="card-type-line">{{ card.scryfall_type_line }}</span>
+                                                {% endif %}
+                                            </div>
+                                            {% if card.scryfall_oracle %}
+                                            <div class="card-oracle-text">{{ card.scryfall_oracle.replace('\n', '<br>')|safe }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
                                 <td>{{ card.set_code }}</td>
                                 <td>{{ card.collector_number }}</td>
                                 <td>{{ card.quantity }}</td>
                                 <td>{{ card.acquisition_price|currency }}</td>
-                                <td>{{ card.market_price|currency }}</td>
+                                <td class="market-cell">
+                                    {% if card.scryfall_price %}
+                                    <div class="market-price-live">{{ card.scryfall_price|currency }}</div>
+                                    {% else %}
+                                    <div class="market-price-live muted">N/A</div>
+                                    {% endif %}
+                                    {% if card.scryfall_price_normal and card.scryfall_price != card.scryfall_price_normal %}
+                                    <div class="market-price-variant">Non-foil: {{ card.scryfall_price_normal|currency }}</div>
+                                    {% endif %}
+                                    {% if card.scryfall_price_foil and card.scryfall_price != card.scryfall_price_foil %}
+                                    <div class="market-price-variant">Foil: {{ card.scryfall_price_foil|currency }}</div>
+                                    {% endif %}
+                                    {% if card.scryfall_price_etched %}
+                                    <div class="market-price-variant">Etched: {{ card.scryfall_price_etched|currency }}</div>
+                                    {% endif %}
+                                    {% if card.market_price %}
+                                    <div class="market-price-stored">Stored: {{ card.market_price|currency }}</div>
+                                    {% endif %}
+                                </td>
                                 <td>{{ card.condition }}</td>
                                 <td>{{ card.language }}</td>
                                 <td>{{ 'Yes' if card.is_foil else 'No' }}</td>
@@ -143,12 +189,12 @@
                         <thead>
                             <tr>
                                 <th><input type="checkbox" id="sealed-select-all"></th>
-                                <th>Name</th>
+                                <th>Card</th>
                                 <th>Set</th>
                                 <th>Type</th>
                                 <th>Qty</th>
                                 <th>Buy</th>
-                                <th>Market</th>
+                                <th>Live Market</th>
                                 <th>Notes</th>
                                 <th>Actions</th>
                             </tr>
@@ -594,3 +640,4 @@
     <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>
+

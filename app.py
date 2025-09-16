@@ -1,8 +1,9 @@
 import io
 import os
+from functools import lru_cache
 from datetime import date, datetime
-from decimal import Decimal
-from typing import Any
+from decimal import Decimal, InvalidOperation
+from typing import Any, Dict, Optional
 
 from flask import Flask, Response, flash, jsonify, redirect, render_template, request, url_for
 from dotenv import load_dotenv
@@ -17,6 +18,109 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "dev-secret")
 
 db = Database()
+
+
+@lru_cache(maxsize=512)
+def _cached_scryfall_lookup(scryfall_id: Optional[str], name: Optional[str], set_code: Optional[str], collector_number: Optional[str]) -> Optional[Dict[str, Any]]:
+    try:
+        if scryfall_id:
+            return scryfall.get_card_by_id(scryfall_id)
+        if name:
+            if set_code and collector_number:
+                query = f'!"{name}" set:{set_code} number:{collector_number}'
+                results = scryfall.search_cards(query)
+                if results:
+                    return results[0]
+            if set_code:
+                return scryfall.get_card(name, set_code)
+            return scryfall.get_card(name)
+    except scryfall.ScryfallError:
+        return None
+    return None
+
+
+@lru_cache(maxsize=64)
+def _fallback_scryfall_search(name: str, set_code: Optional[str]) -> Optional[Dict[str, Any]]:
+    try:
+        query = f'!"{name}"'
+        if set_code:
+            query += f" set:{set_code}"
+        results = scryfall.search_cards(query)
+        if results:
+            return results[0]
+    except scryfall.ScryfallError:
+        return None
+    return None
+
+
+def _decimal_from_price(value: Optional[str]) -> Optional[Decimal]:
+    if not value:
+        return None
+    try:
+        return Decimal(value)
+    except (InvalidOperation, TypeError):
+        return None
+
+
+def _get_live_scryfall_card(card: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    name = card.get("name")
+    set_code = card.get("set_code")
+    collector = card.get("collector_number")
+    scryfall_id = card.get("scryfall_id")
+    details = _cached_scryfall_lookup(scryfall_id, name, set_code, collector)
+    if not details and name:
+        details = _fallback_scryfall_search(name, set_code)
+    return details
+
+
+def _enrich_card_with_scryfall(card: Dict[str, Any]) -> Dict[str, Any]:
+    enriched = dict(card)
+    details = _get_live_scryfall_card(card)
+    if details:
+        prices = details.get("prices") or {}
+        normal_price = _decimal_from_price(prices.get("usd"))
+        foil_price = _decimal_from_price(prices.get("usd_foil"))
+        etched_price = _decimal_from_price(prices.get("usd_etched"))
+        if enriched.get("is_foil") and foil_price is not None:
+            chosen_price = foil_price
+        elif normal_price is not None:
+            chosen_price = normal_price
+        elif foil_price is not None:
+            chosen_price = foil_price
+        elif etched_price is not None:
+            chosen_price = etched_price
+        else:
+            chosen_price = None
+        enriched.update(
+            {
+                "scryfall_details": details,
+                "scryfall_price": chosen_price,
+                "scryfall_price_normal": normal_price,
+                "scryfall_price_foil": foil_price,
+                "scryfall_price_etched": etched_price,
+                "scryfall_image": details.get("image"),
+                "scryfall_type_line": details.get("type_line"),
+                "scryfall_oracle": details.get("oracle_text"),
+                "scryfall_set_name": details.get("set_name"),
+                "scryfall_url": details.get("scryfall_uri"),
+            }
+        )
+    else:
+        enriched.update(
+            {
+                "scryfall_details": None,
+                "scryfall_price": None,
+                "scryfall_price_normal": None,
+                "scryfall_price_foil": None,
+                "scryfall_price_etched": None,
+                "scryfall_image": None,
+                "scryfall_type_line": None,
+                "scryfall_oracle": None,
+                "scryfall_set_name": None,
+                "scryfall_url": None,
+            }
+        )
+    return enriched
 
 
 @app.template_filter("currency")
@@ -46,7 +150,7 @@ def date_filter(value: Any, fmt: str = "%Y-%m-%d") -> str:
 @app.route("/")
 def index() -> str:
     summary = db.fetch_dashboard_summary()
-    cards = db.list_single_cards()
+    cards = [_enrich_card_with_scryfall(card) for card in db.list_single_cards()]
     sealed = db.list_sealed_products()
     supplies = db.list_supply_batches()
     sales = db.get_all_sale_events_with_items()

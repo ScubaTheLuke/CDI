@@ -31,7 +31,22 @@ class DBStub:
         )
 
     def fetch_dashboard_summary(self):
-        return {"total_supplies_cost": Decimal("5")}
+        zero = Decimal('0')
+        return {
+            'single_card_quantity': 0,
+            'single_card_buy_cost': zero,
+            'single_card_market_value': zero,
+            'sealed_quantity': 0,
+            'sealed_buy_cost': zero,
+            'sealed_market_value': zero,
+            'gross_sales': zero,
+            'total_cogs': zero,
+            'total_profit': zero,
+            'net_business_pl': zero,
+            'current_month_sales': zero,
+            'current_month_profit': zero,
+            'total_supplies_cost': Decimal('5'),
+        }
 
     def list_single_cards(self):
         return self.single_cards
@@ -303,3 +318,39 @@ def test_import_inventory_route_tcglive(client):
     last = stub.calls.add_single_card[-1]
     assert last["condition"] == "Played"
     assert last["quantity"] == 3
+
+def test_index_displays_scryfall_data(client, monkeypatch):
+    test_client, stub, app_mod = client
+    stub.single_cards = [
+        {
+            "id": 1,
+            "name": "Sunfall",
+            "set_code": "MOM",
+            "collector_number": "22",
+            "quantity": 3,
+            "acquisition_price": "1.00",
+            "market_price": "2.00",
+            "condition": "Near Mint",
+            "language": "English",
+            "is_foil": False,
+            "notes": "Test",
+            "scryfall_id": "card-123",
+        }
+    ]
+    fake_details = {
+        "prices": {"usd": "3.50", "usd_foil": "4.25"},
+        "image": "https://img.scryfall.fake/sunfall.png",
+        "type_line": "Sorcery",
+        "oracle_text": "Exile all creatures.",
+        "set_name": "March of the Machine",
+        "scryfall_uri": "https://scryfall.com/card/mom/22/sunfall",
+        "rarity": "rare",
+    }
+    monkeypatch.setattr(app_mod, "_get_live_scryfall_card", lambda card: fake_details)
+
+    response = test_client.get("/")
+    body = response.data.decode()
+    assert "https://img.scryfall.fake/sunfall.png" in body
+    assert "$3.50" in body
+    assert "March of the Machine" in body
+    assert "Exile all creatures." in body

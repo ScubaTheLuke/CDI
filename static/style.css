@@ -631,6 +631,51 @@ button.link {
     filter: invert(1);
 }
 
+@media (min-width: 1200px) {
+    main {
+        max-width: 1600px;
+    }
+
+    .panel-body {
+        padding: 0 2rem 2rem;
+    }
+
+    .panel-header {
+        flex-wrap: nowrap;
+    }
+
+    .panel .actions {
+        flex-wrap: nowrap;
+    }
+
+    .inventory-table th,
+    .inventory-table td {
+        white-space: nowrap;
+        word-break: keep-all;
+        padding: 0.75rem 1.15rem;
+    }
+
+    .inventory-table td[data-label="Card"],
+    .inventory-table td[data-label="Notes"],
+    .inventory-table td[data-label="Live Market"] {
+        white-space: normal;
+        word-break: normal;
+    }
+
+    .inventory-table td[data-label="Card"] .card-name-details {
+        white-space: normal;
+        word-break: normal;
+    }
+
+    .card-name-details {
+        max-width: 520px;
+    }
+
+    .card-name-cell {
+        min-width: 18rem;
+    }
+}
+
 @media (max-width: 900px) {
     .inventory-table thead {
         display: none;

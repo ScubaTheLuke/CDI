@@ -136,6 +136,10 @@ def initialize_database() -> None:
         );
         """,
         """
+        ALTER TABLE sale_events
+        ADD COLUMN IF NOT EXISTS platform TEXT;
+        """,
+        """
         CREATE TABLE IF NOT EXISTS sale_items (
             id SERIAL PRIMARY KEY,
             sale_event_id INTEGER NOT NULL REFERENCES sale_events(id) ON DELETE CASCADE,
@@ -360,6 +364,10 @@ class Database:
                 WHERE id = %s
                 """
             , values)
+
+    def _ensure_sale_event_platform_column(self) -> None:
+        with connection_cursor(commit=True) as cur:
+            cur.execute("ALTER TABLE sale_events ADD COLUMN IF NOT EXISTS platform TEXT")
 
     def bulk_update_cards(self, filters: Dict[str, Any], updates: Dict[str, Any]) -> int:
         if not isinstance(filters, dict) or not isinstance(updates, dict):
@@ -795,6 +803,7 @@ class Database:
             - total_supplies_cost
         )
 
+        self._ensure_sale_event_platform_column()
         with connection_cursor(commit=True) as cur:
             cur.execute(
                 """

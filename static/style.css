@@ -474,8 +474,8 @@ button.link {
 }
 
 .forms-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 1.5rem;
 }
 
@@ -484,6 +484,36 @@ button.link {
     padding: 1.5rem;
     border-radius: 18px;
     box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-card-header h2 {
+    margin: 0;
+}
+
+.form-card-body {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.form-card-body .full-span {
+    grid-column: 1 / -1;
+}
+
+.form-card-footer {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .flash-container {
@@ -648,6 +678,38 @@ button.link {
         flex-wrap: nowrap;
     }
 
+    #add-items .forms-grid {
+        gap: 2rem;
+    }
+
+    #add-items .form-card {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        align-items: start;
+        padding: 1.75rem 2rem;
+        gap: 1.25rem 2rem;
+    }
+
+    #add-items .form-card-header {
+        grid-column: 1;
+    }
+
+    #add-items .form-card-body {
+        grid-column: 2;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+        gap: 1rem 1.5rem;
+    }
+
+    #add-items .form-card-body .form-row {
+        margin-bottom: 0;
+    }
+
+    #add-items .form-card-footer {
+        grid-column: 2;
+        justify-content: flex-end;
+    }
+
     .inventory-table th,
     .inventory-table td {
         white-space: nowrap;
@@ -655,14 +717,14 @@ button.link {
         padding: 0.75rem 1.15rem;
     }
 
-    .inventory-table td[data-label="Card"],
-    .inventory-table td[data-label="Notes"],
-    .inventory-table td[data-label="Live Market"] {
+    .inventory-table td[data-label='Card'],
+    .inventory-table td[data-label='Notes'],
+    .inventory-table td[data-label='Live Market'] {
         white-space: normal;
         word-break: normal;
     }
 
-    .inventory-table td[data-label="Card"] .card-name-details {
+    .inventory-table td[data-label='Card'] .card-name-details {
         white-space: normal;
         word-break: normal;
     }

@@ -1,3 +1,4 @@
+import io
 import os
 from datetime import date, datetime
 from decimal import Decimal
@@ -8,6 +9,7 @@ from dotenv import load_dotenv
 
 from database import Database
 import scryfall
+import inventory_import
 
 load_dotenv()
 
@@ -87,7 +89,6 @@ def add_single_card() -> Response:
         flash(f"Failed to add card: {exc}", "error")
     return redirect(url_for("index") + "#inventory")
 
-
 @app.post("/inventory/cards/bulk-update")
 def bulk_update_cards() -> Response:
     updates = request.get_json(force=True)
@@ -114,6 +115,40 @@ def delete_card(card_id: int) -> Response:
         flash(f"Failed to delete card: {exc}", "error")
     return redirect(url_for("index") + "#inventory")
 
+@app.post("/inventory/cards/import")
+def import_card_inventory() -> Response:
+    uploaded = request.files.get("inventory_csv")
+    if uploaded is None or uploaded.filename == "":
+        flash("Select a CSV file to import.", "error")
+        return redirect(url_for("index") + "#inventory")
+
+    try:
+        uploaded.stream.seek(0)
+        raw = uploaded.read()
+        if isinstance(raw, bytes):
+            text_data = raw.decode("utf-8-sig")
+        else:
+            text_data = raw
+        stream = io.StringIO(text_data)
+        imported = 0
+        try:
+            for payload in inventory_import.parse_inventory_csv(stream):
+                db.add_single_card(payload)
+                imported += 1
+        finally:
+            stream.close()
+    except inventory_import.InventoryImportError as exc:
+        flash(f"CSV import failed: {exc}", "error")
+        return redirect(url_for("index") + "#inventory")
+    except Exception as exc:
+        flash(f"Failed to import CSV: {exc}", "error")
+        return redirect(url_for("index") + "#inventory")
+
+    if imported == 0:
+        flash("The CSV file did not contain any rows to import.", "warning")
+    else:
+        flash(f"Imported {imported} card entries.", "success")
+    return redirect(url_for("index") + "#inventory")
 
 @app.post("/inventory/sealed/add")
 def add_sealed_product() -> Response:
@@ -134,7 +169,6 @@ def add_sealed_product() -> Response:
     except Exception as exc:
         flash(f"Failed to add sealed product: {exc}", "error")
     return redirect(url_for("index") + "#inventory")
-
 
 @app.post("/inventory/sealed/bulk-update")
 def bulk_update_sealed() -> Response:
@@ -162,7 +196,6 @@ def delete_sealed_product(product_id: int) -> Response:
         flash(f"Failed to delete sealed product: {exc}", "error")
     return redirect(url_for("index") + "#inventory")
 
-
 @app.post("/supplies/add")
 def add_supply_batch() -> Response:
     form = request.form
@@ -181,7 +214,6 @@ def add_supply_batch() -> Response:
         flash(f"Failed to add shipping supplies: {exc}", "error")
     return redirect(url_for("index") + "#inventory")
 
-
 @app.post("/supplies/<int:batch_id>/delete")
 def delete_supply_batch(batch_id: int) -> Response:
     try:
@@ -190,7 +222,6 @@ def delete_supply_batch(batch_id: int) -> Response:
     except Exception as exc:
         flash(f"Failed to delete supply batch: {exc}", "error")
     return redirect(url_for("index") + "#inventory")
-
 
 @app.post("/sales/record")
 def record_sale() -> Response:
@@ -254,3 +285,4 @@ def api_scryfall_search() -> Response:
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)), debug=True)
+

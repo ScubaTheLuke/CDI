@@ -274,6 +274,18 @@
                     </div>
                 </form>
 
+                <form class="form-card" method="post" action="{{ url_for('import_card_inventory') }}" enctype="multipart/form-data">
+                    <h2>Import Card Inventory</h2>
+                    <p class="form-help">Upload a CSV from TCGplayer or TCG Live.</p>
+                    <div class="form-row">
+                        <label for="inventory-csv">Inventory CSV</label>
+                        <input type="file" id="inventory-csv" name="inventory_csv" accept=".csv" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit">Import Cards</button>
+                    </div>
+                </form>
+
                 <form class="form-card" method="post" action="{{ url_for('add_sealed_product') }}">
                     <h2>Add Sealed Product</h2>
                     <div class="form-row">

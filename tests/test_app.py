@@ -1,3 +1,4 @@
+import io
 import importlib
 import sys
 from decimal import Decimal
@@ -251,3 +252,54 @@ def test_api_scryfall_search_success(client, monkeypatch):
     response = test_client.get("/api/scryfall/search", query_string={"query": "lotus"})
     assert response.status_code == 200
     assert response.get_json()["data"] == ["card"]
+
+
+
+def test_import_inventory_route_tcgplayer(client):
+    test_client, stub, _ = client
+    csv_data = (
+        "Quantity,Name,Simple Name,Set,Card Number,Set Code,Printing,Condition,Language,Rarity,Product ID,SKU\n"
+        "7,Goblin War Buggy,Goblin War Buggy,Urza's Saga,196,USG,Normal,Near Mint,English,Common,6895,20373\n"
+        "0,Skip Row,Skip Row,Test,1,TST,Normal,Near Mint,English,Common,1,1\n"
+        "2,Giant Cockroach,Giant Cockroach,9th Edition,133,9ED,Foil,Near Mint,English,Common,12664,24722\n"
+    )
+    response = test_client.post(
+        "/inventory/cards/import",
+        data={"inventory_csv": (io.BytesIO(csv_data.encode("utf-8")), "tcgplayer.csv")},
+        content_type="multipart/form-data",
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+    assert len(stub.calls.add_single_card) == 2
+    first = stub.calls.add_single_card[0]
+    assert first["name"] == "Goblin War Buggy"
+    assert first["set_code"] == "USG"
+    assert first["quantity"] == 7
+    second = stub.calls.add_single_card[1]
+    assert second["is_foil"] is True
+
+
+def test_import_inventory_route_tcglive(client):
+    test_client, stub, _ = client
+    csv_data = (
+        "TCGplayer Id,Product Line,Set Name,Product Name,Title,Number,Rarity,Condition,TCG Market Price,TCG Direct Low,TCG Low Price With Shipping,TCG Low Price,Total Quantity,Add to Quantity,TCG Marketplace Price,Photo URL\n"
+        "12345,Magic,March of the Machine,Sunfall,,22,R,Near Mint,1.23,,1.50,1.10,4,0,1.05,\n"
+        "23456,Magic,Kamigawa: Neon Dynasty,Mirror Box,,243,R,Near Mint,2.34,,2.40,2.20,0,0,2.20,\n"
+        "34567,Magic,Shadowmoor,Curse of Chains,,40,C,Played,0.25,,0.40,0.20,3,0,0.20,\n"
+    )
+    response = test_client.post(
+        "/inventory/cards/import",
+        data={"inventory_csv": (io.BytesIO(csv_data.encode("utf-8")), "tcglive.csv")},
+        content_type="multipart/form-data",
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+    assert len(stub.calls.add_single_card) == 2
+    first = stub.calls.add_single_card[0]
+    assert first["name"] == "Sunfall"
+    assert first["market_price"] == Decimal("1.23")
+    assert first["acquisition_price"] == Decimal("1.05")
+    assert first["set_code"] == "March of the Machine"
+    last = stub.calls.add_single_card[-1]
+    assert last["condition"] == "Played"
+    assert last["quantity"] == 3

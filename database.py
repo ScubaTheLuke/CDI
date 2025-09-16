@@ -845,13 +845,13 @@ class Database:
             cur.execute(
                 """
                 SELECT
-                    COALESCE(SUM(total_sale_amount), 0) AS gross_sales,
+                    COALESCE(SUM(total_sale_amount - customer_shipping_charged), 0) AS gross_sales,
                     COALESCE(SUM(total_cost_of_goods), 0) AS total_cogs,
                     COALESCE(SUM(total_profit_loss), 0) AS total_profit,
                     COALESCE(SUM(total_supplies_cost_for_sale), 0) AS supplies_cost,
                     COALESCE(SUM(
                         CASE WHEN date_trunc('month', sale_date) = date_trunc('month', CURRENT_DATE)
-                             THEN total_sale_amount ELSE 0 END
+                             THEN total_sale_amount - customer_shipping_charged ELSE 0 END
                     ), 0) AS current_month_sales,
                     COALESCE(SUM(
                         CASE WHEN date_trunc('month', sale_date) = date_trunc('month', CURRENT_DATE)

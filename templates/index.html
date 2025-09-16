@@ -44,31 +44,31 @@
             <div class="cards-grid">
                 <article class="info-card">
                     <h3>Single Cards</h3>
-                    <p>Total Quantity: <strong>{{ summary.single_card_quantity }}</strong></p>
-                    <p>Buy Cost: <strong>{{ summary.single_card_buy_cost|currency }}</strong></p>
-                    <p>Market Value: <strong>{{ summary.single_card_market_value|currency }}</strong></p>
+                    <p>Total Quantity <span class="tooltip-icon" tabindex="0" data-tooltip="Sum of all copies of single cards currently in inventory.">?</span>: <strong>{{ summary.single_card_quantity }}</strong></p>
+                    <p>Buy Cost <span class="tooltip-icon" tabindex="0" data-tooltip="Total cost basis for single cards on hand (acquisition price per card x quantity).">?</span>: <strong>{{ summary.single_card_buy_cost|currency }}</strong></p>
+                    <p>Market Value <span class="tooltip-icon" tabindex="0" data-tooltip="Estimated market value for single cards (latest market price per card x quantity).">?</span>: <strong>{{ summary.single_card_market_value|currency }}</strong></p>
                 </article>
                 <article class="info-card">
                     <h3>Sealed Products</h3>
-                    <p>Total Quantity: <strong>{{ summary.sealed_quantity }}</strong></p>
-                    <p>Buy Cost: <strong>{{ summary.sealed_buy_cost|currency }}</strong></p>
-                    <p>Market Value: <strong>{{ summary.sealed_market_value|currency }}</strong></p>
+                    <p>Total Quantity <span class="tooltip-icon" tabindex="0" data-tooltip="Sum of all sealed products currently in inventory.">?</span>: <strong>{{ summary.sealed_quantity }}</strong></p>
+                    <p>Buy Cost <span class="tooltip-icon" tabindex="0" data-tooltip="Total acquisition cost for sealed products on hand (purchase price per unit x quantity).">?</span>: <strong>{{ summary.sealed_buy_cost|currency }}</strong></p>
+                    <p>Market Value <span class="tooltip-icon" tabindex="0" data-tooltip="Estimated market value for sealed products (current market price per unit x quantity).">?</span>: <strong>{{ summary.sealed_market_value|currency }}</strong></p>
                 </article>
                 <article class="info-card">
                     <h3>Sales Performance (All Time)</h3>
-                    <p>Gross Sales: <strong>{{ summary.gross_sales|currency }}</strong></p>
-                    <p>COGS: <strong>{{ summary.total_cogs|currency }}</strong></p>
-                    <p>Realized Profit/Loss: <strong>{{ summary.total_profit|currency }}</strong></p>
+                    <p>Gross Sales <span class="tooltip-icon" tabindex="0" data-tooltip="Total sale price of items sold (excludes customer shipping charges).">?</span>: <strong>{{ summary.gross_sales|currency }}</strong></p>
+                    <p>COGS <span class="tooltip-icon" tabindex="0" data-tooltip="Total cost of goods sold for recorded sales (inventory acquisition cost of items sold).">?</span>: <strong>{{ summary.total_cogs|currency }}</strong></p>
+                    <p>Realized Profit/Loss <span class="tooltip-icon" tabindex="0" data-tooltip="Net profit from sales after COGS, actual postage, platform fees, and shipping supplies, including shipping income.">?</span>: <strong>{{ summary.total_profit|currency }}</strong></p>
                 </article>
                 <article class="info-card">
                     <h3>Net Business P/L</h3>
-                    <p>Net Business P/L (All Time): <strong>{{ summary.net_business_pl|currency }}</strong></p>
-                    <p>Current Month Sales: <strong>{{ summary.current_month_sales|currency }}</strong></p>
-                    <p>Current Month P/L: <strong>{{ summary.current_month_profit|currency }}</strong></p>
+                    <p>Net Business P/L (All Time) <span class="tooltip-icon" tabindex="0" data-tooltip="Sales profit plus ledger income and expenses, adding back shipping supply costs so they are not counted twice.">?</span>: <strong>{{ summary.net_business_pl|currency }}</strong></p>
+                    <p>Current Month Sales <span class="tooltip-icon" tabindex="0" data-tooltip="Gross sales for this month based on sale prices only (no customer shipping charges).">?</span>: <strong>{{ summary.current_month_sales|currency }}</strong></p>
+                    <p>Current Month P/L <span class="tooltip-icon" tabindex="0" data-tooltip="Realized profit or loss from this month's sales after COGS, postage, platform fees, and supplies.">?</span>: <strong>{{ summary.current_month_profit|currency }}</strong></p>
                 </article>
                 <article class="info-card">
                     <h3>Shipping Supplies</h3>
-                    <p>Total Cost Used in Sales: <strong>{{ summary.total_supplies_cost|currency }}</strong></p>
+                    <p>Total Cost Used in Sales <span class="tooltip-icon" tabindex="0" data-tooltip="Total shipping supply costs allocated to completed sales.">?</span>: <strong>{{ summary.total_supplies_cost|currency }}</strong></p>
                 </article>
             </div>
         </section>

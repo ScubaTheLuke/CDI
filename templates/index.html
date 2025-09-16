@@ -548,16 +548,16 @@
                             <div class="sale-entry-body">
                                 <h4>Items</h4>
                                 <ul>
-                                    {% for item in event.items %}
+                                    {% for item in event['items'] %}
                                     <li>
                                         {{ item.quantity }}x {{ item.item_name }} ({{ item.set_code }}) at {{ item.sale_price_per_unit|currency }} each &mdash; Profit {{ item.profit_loss|currency }}
                                     </li>
                                     {% endfor %}
                                 </ul>
-                                {% if event.supplies %}
+                                {% if event['supplies'] %}
                                 <h4>Supplies</h4>
                                 <ul>
-                                    {% for supply in event.supplies %}
+                                    {% for supply in event['supplies'] %}
                                     <li>{{ supply.quantity_used }}x batch #{{ supply.supply_batch_id }} at {{ supply.unit_cost|currency }} ({{ supply.total_cost|currency }})</li>
                                     {% endfor %}
                                 </ul>

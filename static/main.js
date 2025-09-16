@@ -58,26 +58,163 @@
         }
     }
 
-    const cardFilterInput = document.getElementById('card-filter');
-    if (cardFilterInput) {
-        cardFilterInput.addEventListener('input', () => {
-            const term = cardFilterInput.value.trim().toLowerCase();
-            document.querySelectorAll('#cards-table tbody tr').forEach((row) => {
-                const haystack = [
-                    row.dataset.name || '',
-                    row.dataset.set || '',
-                    row.dataset.notes || ''
-                ].join(' ');
-                row.classList.toggle('hidden', term && !haystack.includes(term));
+
+    function setupInventoryTable(config) {
+        const table = document.getElementById(config.tableId);
+        const pagination = document.getElementById(config.paginationId);
+        if (!table || !pagination) {
+            return;
+        }
+        const filterInput = config.filterInputId ? document.getElementById(config.filterInputId) : null;
+        const masterCheckbox = config.masterCheckboxId ? document.getElementById(config.masterCheckboxId) : null;
+        const allRows = Array.from(table.querySelectorAll('tbody tr'));
+        if (!allRows.length) {
+            pagination.classList.add('pagination--empty');
+            return;
+        }
+        let filteredRows = allRows.slice();
+        let currentPage = 1;
+        const smallScreenQuery = window.matchMedia('(max-width: 700px)');
+        const pageSizeFor = () => (smallScreenQuery.matches ? (config.pageSizeMobile || 10) : (config.pageSizeDesktop || 25));
+        const searchKeys = config.searchKeys || [];
+
+        function searchTextFor(row) {
+            if (searchKeys.length) {
+                return searchKeys.map((key) => (row.dataset[key] || '')).join(' ').toLowerCase();
+            }
+            return row.textContent.toLowerCase();
+        }
+
+        function renderPagination(totalPages) {
+            pagination.innerHTML = '';
+            if (!filteredRows.length) {
+                pagination.classList.add('pagination--empty');
+                const empty = document.createElement('span');
+                empty.className = 'pagination-empty';
+                empty.textContent = 'No matching results';
+                pagination.appendChild(empty);
+                return;
+            }
+            pagination.classList.remove('pagination--empty');
+            if (totalPages <= 1) {
+                return;
+            }
+            const fragment = document.createDocumentFragment();
+
+            const createButton = (label, page, disabled = false, isActive = false) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = label;
+                if (disabled) {
+                    button.disabled = true;
+                }
+                if (isActive) {
+                    button.classList.add('active');
+                }
+                button.addEventListener('click', () => {
+                    if (disabled || page === currentPage) {
+                        return;
+                    }
+                    currentPage = page;
+                    render();
+                });
+                fragment.appendChild(button);
+            };
+
+            const appendEllipsis = () => {
+                const span = document.createElement('span');
+                span.className = 'pagination-ellipsis';
+                span.textContent = '...';
+                fragment.appendChild(span);
+            };
+
+            const total = totalPages;
+            createButton('<', Math.max(1, currentPage - 1), currentPage === 1);
+
+            const numbers = [];
+            if (total <= 7) {
+                for (let i = 1; i <= total; i += 1) {
+                    numbers.push(i);
+                }
+            } else {
+                const windowStart = Math.max(2, currentPage - 2);
+                const windowEnd = Math.min(total - 1, currentPage + 2);
+                numbers.push(1);
+                if (windowStart > 2) {
+                    numbers.push('ellipsis');
+                }
+                for (let i = windowStart; i <= windowEnd; i += 1) {
+                    numbers.push(i);
+                }
+                if (windowEnd < total - 1) {
+                    numbers.push('ellipsis');
+                }
+                numbers.push(total);
+            }
+
+            numbers.forEach((value) => {
+                if (value === 'ellipsis') {
+                    appendEllipsis();
+                } else {
+                    createButton(String(value), value, false, value === currentPage);
+                }
             });
-        });
+
+            createButton('>', Math.min(total, currentPage + 1), currentPage === total);
+            pagination.appendChild(fragment);
+        }
+
+        function render() {
+            const pageSize = pageSizeFor();
+            const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+            if (currentPage > totalPages) {
+                currentPage = totalPages;
+            }
+            allRows.forEach((row) => row.classList.add('hidden'));
+            const start = (currentPage - 1) * pageSize;
+            const visibleRows = filteredRows.slice(start, start + pageSize);
+            visibleRows.forEach((row) => row.classList.remove('hidden'));
+            if (masterCheckbox) {
+                masterCheckbox.checked = false;
+            }
+            renderPagination(totalPages);
+        }
+
+        function applyFilter(term) {
+            const normalized = (term || '').trim().toLowerCase();
+            filteredRows = normalized
+                ? allRows.filter((row) => searchTextFor(row).includes(normalized))
+                : allRows.slice();
+            currentPage = 1;
+            render();
+        }
+
+        if (filterInput) {
+            filterInput.addEventListener('input', () => applyFilter(filterInput.value));
+        }
+
+        const mqListener = () => render();
+        if (smallScreenQuery.addEventListener) {
+            smallScreenQuery.addEventListener('change', mqListener);
+        } else if (smallScreenQuery.addListener) {
+            smallScreenQuery.addListener(mqListener);
+        }
+
+        applyFilter(filterInput ? filterInput.value : '');
     }
 
     function attachSelectAll(masterId, selector) {
         const master = document.getElementById(masterId);
-        if (!master) return;
+        if (!master) {
+            return;
+        }
         master.addEventListener('change', () => {
             document.querySelectorAll(selector).forEach((checkbox) => {
+                const row = checkbox.closest('tr');
+                if (!row || row.classList.contains('hidden')) {
+                    checkbox.checked = false;
+                    return;
+                }
                 checkbox.checked = master.checked;
             });
         });
@@ -85,6 +222,24 @@
 
     attachSelectAll('card-select-all', '.card-select');
     attachSelectAll('sealed-select-all', '.sealed-select');
+
+    setupInventoryTable({
+        tableId: 'cards-table',
+        paginationId: 'card-pagination',
+        filterInputId: 'card-filter',
+        masterCheckboxId: 'card-select-all',
+        searchKeys: ['name', 'set', 'notes'],
+        pageSizeDesktop: 25,
+        pageSizeMobile: 12,
+    });
+
+    setupInventoryTable({
+        tableId: 'sealed-table',
+        paginationId: 'sealed-pagination',
+        masterCheckboxId: 'sealed-select-all',
+        pageSizeDesktop: 15,
+        pageSizeMobile: 8,
+    });
 
     const modalOverlay = document.getElementById('modal-overlay');
     const modalForm = document.getElementById('modal-form');

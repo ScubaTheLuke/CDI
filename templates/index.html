@@ -85,140 +85,141 @@
                         <button id="card-mass-edit" class="secondary">Mass Update</button>
                     </div>
                 </header>
-                <div class="table-wrapper">
-                    <table id="cards-table">
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox" id="card-select-all"></th>
-                                <th>Card</th>
-                                <th>Set</th>
-                                <th>#</th>
-                                <th>Qty</th>
-                                <th>Buy</th>
-                                <th>Live Market</th>
-                                <th>Condition</th>
-                                <th>Language</th>
-                                <th>Foil</th>
-                                <th>Notes</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for card in cards %}
-                            <tr data-name="{{ card.name|lower }}" data-set="{{ card.set_code|default('')|lower }}" data-notes="{{ card.notes|default('')|lower }}">
-                                <td><input type="checkbox" class="card-select" value="{{ card.id }}"></td>
-                                <td class="card-name-cell">
-                                    <div class="card-name-wrap">
-                                        {% if card.scryfall_image %}
-                                        <img src="{{ card.scryfall_image }}" alt="{{ card.name }}" class="card-thumb">
-                                        {% endif %}
-                                        <div class="card-name-details">
-                                            <div class="card-name-title">
-                                                {% if card.scryfall_url %}
-                                                <a href="{{ card.scryfall_url }}" target="_blank" rel="noopener">{{ card.name }}</a>
-                                                {% else %}
-                                                {{ card.name }}
-                                                {% endif %}
-                                            </div>
-                                            <div class="card-name-meta">
-                                                {% if card.scryfall_set_name %}
-                                                <span class="card-set-name">{{ card.scryfall_set_name }}{% if card.scryfall_details and card.scryfall_details.rarity %} • {{ card.scryfall_details.rarity|title }}{% endif %}</span>
-                                                {% elif card.set_code %}
-                                                <span class="card-set-name">Set: {{ card.set_code }}</span>
-                                                {% endif %}
-                                                {% if card.scryfall_type_line %}
-                                                <span class="card-type-line">{{ card.scryfall_type_line }}</span>
-                                                {% endif %}
-                                            </div>
-                                            {% if card.scryfall_oracle %}
-                                            <div class="card-oracle-text">{{ card.scryfall_oracle.replace('\n', '<br>')|safe }}</div>
+                <div class="panel-body">
+                    <div class="table-wrapper">
+                        <table id="cards-table">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="card-select-all"></th>
+                                    <th>Card</th>
+                                    <th>Set</th>
+                                    <th>#</th>
+                                    <th>Qty</th>
+                                    <th>Buy</th>
+                                    <th>Live Market</th>
+                                    <th>Condition</th>
+                                    <th>Language</th>
+                                    <th>Foil</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for card in cards %}
+                                <tr data-name="{{ card.name|lower }}" data-set="{{ card.set_code|default('')|lower }}" data-notes="{{ card.notes|default('')|lower }}">
+                                    <td><input type="checkbox" class="card-select" value="{{ card.id }}"></td>
+                                    <td class="card-name-cell">
+                                        <div class="card-name-wrap">
+                                            {% if card.scryfall_image %}
+                                            <img src="{{ card.scryfall_image }}" alt="{{ card.name }}" class="card-thumb">
                                             {% endif %}
+                                            <div class="card-name-details">
+                                                <div class="card-name-title">
+                                                    {% if card.scryfall_url %}
+                                                    <a href="{{ card.scryfall_url }}" target="_blank" rel="noopener">{{ card.name }}</a>
+                                                    {% else %}
+                                                    {{ card.name }}
+                                                    {% endif %}
+                                                </div>
+                                                <div class="card-name-meta">
+                                                    {% if card.scryfall_set_name %}
+                                                    <span class="card-set-name">{{ card.scryfall_set_name }}{% if card.scryfall_details and card.scryfall_details.rarity %} - {{ card.scryfall_details.rarity|title }}{% endif %}</span>
+                                                    {% elif card.set_code %}
+                                                    <span class="card-set-name">Set: {{ card.set_code }}</span>
+                                                    {% endif %}
+                                                    {% if card.scryfall_type_line %}
+                                                    <span class="card-type-line">{{ card.scryfall_type_line }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                {% if card.scryfall_oracle %}
+                                                <div class="card-oracle-text">{{ card.scryfall_oracle.replace('\n', '<br>')|safe }}</div>
+                                                {% endif %}
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>{{ card.set_code }}</td>
-                                <td>{{ card.collector_number }}</td>
-                                <td>{{ card.quantity }}</td>
-                                <td>{{ card.acquisition_price|currency }}</td>
-                                <td class="market-cell">
-                                    {% if card.scryfall_price %}
-                                    <div class="market-price-live">{{ card.scryfall_price|currency }}</div>
-                                    {% else %}
-                                    <div class="market-price-live muted">N/A</div>
-                                    {% endif %}
-                                    {% if card.scryfall_price_normal and card.scryfall_price != card.scryfall_price_normal %}
-                                    <div class="market-price-variant">Non-foil: {{ card.scryfall_price_normal|currency }}</div>
-                                    {% endif %}
-                                    {% if card.scryfall_price_foil and card.scryfall_price != card.scryfall_price_foil %}
-                                    <div class="market-price-variant">Foil: {{ card.scryfall_price_foil|currency }}</div>
-                                    {% endif %}
-                                    {% if card.scryfall_price_etched %}
-                                    <div class="market-price-variant">Etched: {{ card.scryfall_price_etched|currency }}</div>
-                                    {% endif %}
-                                    {% if card.market_price %}
-                                    <div class="market-price-stored">Stored: {{ card.market_price|currency }}</div>
-                                    {% endif %}
-                                </td>
-                                <td>{{ card.condition }}</td>
-                                <td>{{ card.language }}</td>
-                                <td>{{ 'Yes' if card.is_foil else 'No' }}</td>
-                                <td>{{ card.notes }}</td>
-                                <td>
-                                    <form method="post" action="{{ url_for('delete_card', card_id=card.id) }}" onsubmit="return confirm('Delete this card?');">
-                                        <button type="submit" class="danger">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                    </td>
+                                    <td>{{ card.set_code }}</td>
+                                    <td>{{ card.collector_number }}</td>
+                                    <td>{{ card.quantity }}</td>
+                                    <td>{{ card.acquisition_price|currency }}</td>
+                                    <td class="market-cell">
+                                        {% if card.scryfall_price %}
+                                        <div class="market-price-live">{{ card.scryfall_price|currency }}</div>
+                                        {% else %}
+                                        <div class="market-price-live muted">N/A</div>
+                                        {% endif %}
+                                        {% if card.scryfall_price_normal and card.scryfall_price != card.scryfall_price_normal %}
+                                        <div class="market-price-variant">Non-foil: {{ card.scryfall_price_normal|currency }}</div>
+                                        {% endif %}
+                                        {% if card.scryfall_price_foil and card.scryfall_price != card.scryfall_price_foil %}
+                                        <div class="market-price-variant">Foil: {{ card.scryfall_price_foil|currency }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ card.condition }}</td>
+                                    <td>{{ card.language }}</td>
+                                    <td>{{ 'Yes' if card.is_foil else 'No' }}</td>
+                                    <td>{{ card.notes }}</td>
+                                    <td>
+                                        <form method="post" action="{{ url_for('delete_card', card_id=card.id) }}" onsubmit="return confirm('Delete this card?');">
+                                            <button type="submit" class="danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav id="card-pagination" class="pagination" aria-label="Card pages"></nav>
                 </div>
             </div>
 
             <div class="panel">
                 <header class="panel-header">
                     <div>
-                        <h2>Sealed Products</h2>
+                        <h2>Sealed Product Inventory</h2>
+                        <p>Track sealed boxes, packs, and accessories.</p>
                     </div>
                     <div class="actions">
                         <button id="sealed-mass-edit" class="secondary">Mass Update</button>
                     </div>
                 </header>
-                <div class="table-wrapper">
-                    <table id="sealed-table">
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox" id="sealed-select-all"></th>
-                                <th>Card</th>
-                                <th>Set</th>
-                                <th>Type</th>
-                                <th>Qty</th>
-                                <th>Buy</th>
-                                <th>Live Market</th>
-                                <th>Notes</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for product in sealed_products %}
-                            <tr>
-                                <td><input type="checkbox" class="sealed-select" value="{{ product.id }}"></td>
-                                <td>{{ product.name }}</td>
-                                <td>{{ product.set_code }}</td>
-                                <td>{{ product.product_type }}</td>
-                                <td>{{ product.quantity }}</td>
-                                <td>{{ product.acquisition_price|currency }}</td>
-                                <td>{{ product.market_price|currency }}</td>
-                                <td>{{ product.notes }}</td>
-                                <td>
-                                    <form method="post" action="{{ url_for('delete_sealed_product', product_id=product.id) }}" onsubmit="return confirm('Delete this sealed product?');">
-                                        <button type="submit" class="danger">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="panel-body">
+                    <div class="table-wrapper">
+                        <table id="sealed-table">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="sealed-select-all"></th>
+                                    <th>Name</th>
+                                    <th>Set</th>
+                                    <th>Type</th>
+                                    <th>Qty</th>
+                                    <th>Buy</th>
+                                    <th>Market</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in sealed_products %}
+                                <tr>
+                                    <td><input type="checkbox" class="sealed-select" value="{{ product.id }}"></td>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ product.set_code }}</td>
+                                    <td>{{ product.product_type }}</td>
+                                    <td>{{ product.quantity }}</td>
+                                    <td>{{ product.acquisition_price|currency }}</td>
+                                    <td>{{ product.market_price|currency }}</td>
+                                    <td>{{ product.notes }}</td>
+                                    <td>
+                                        <form method="post" action="{{ url_for('delete_sealed_product', product_id=product.id) }}" onsubmit="return confirm('Delete this sealed product?');">
+                                            <button type="submit" class="danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav id="sealed-pagination" class="pagination" aria-label="Sealed product pages"></nav>
                 </div>
             </div>
 
@@ -226,41 +227,44 @@
                 <header class="panel-header">
                     <div>
                         <h2>Shipping Supply Batches</h2>
+                        <p>Monitor postage materials consumed in sales.</p>
                     </div>
                 </header>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Description</th>
-                                <th>Supplier</th>
-                                <th>Unit Cost</th>
-                                <th>Purchased</th>
-                                <th>Available</th>
-                                <th>Date</th>
-                                <th>Notes</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for batch in supply_batches %}
-                            <tr>
-                                <td>{{ batch.description }}</td>
-                                <td>{{ batch.supplier }}</td>
-                                <td>{{ batch.unit_cost|currency }}</td>
-                                <td>{{ batch.quantity_purchased }}</td>
-                                <td>{{ batch.quantity_available }}</td>
-                                <td>{{ batch.purchased_at|dateformat }}</td>
-                                <td>{{ batch.notes }}</td>
-                                <td>
-                                    <form method="post" action="{{ url_for('delete_supply_batch', batch_id=batch.id) }}" onsubmit="return confirm('Delete this supply batch?');">
-                                        <button type="submit" class="danger">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="panel-body">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Supplier</th>
+                                    <th>Unit Cost</th>
+                                    <th>Purchased</th>
+                                    <th>Available</th>
+                                    <th>Date</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for batch in supply_batches %}
+                                <tr>
+                                    <td>{{ batch.description }}</td>
+                                    <td>{{ batch.supplier }}</td>
+                                    <td>{{ batch.unit_cost|currency }}</td>
+                                    <td>{{ batch.quantity_purchased }}</td>
+                                    <td>{{ batch.quantity_available }}</td>
+                                    <td>{{ batch.purchased_at|dateformat }}</td>
+                                    <td>{{ batch.notes }}</td>
+                                    <td>
+                                        <form method="post" action="{{ url_for('delete_supply_batch', batch_id=batch.id) }}" onsubmit="return confirm('Delete this supply batch?');">
+                                            <button type="submit" class="danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </section>
@@ -412,195 +416,204 @@
                         <p>Select inventory items and supplies used, then submit.</p>
                     </div>
                 </header>
-                <form id="sale-form">
-                    <div class="form-grid">
-                        <div>
-                            <label for="sale-date">Sale Date</label>
-                            <input type="date" id="sale-date" name="sale_date" value="{{ today|dateformat }}">
+                <div class="panel-body">
+                    <form id="sale-form">
+                        <div class="form-grid">
+                            <div>
+                                <label for="sale-date">Sale Date</label>
+                                <input type="date" id="sale-date" name="sale_date" value="{{ today|dateformat }}">
+                            </div>
+                            <div>
+                                <label for="sale-platform">Platform</label>
+                                <input type="text" id="sale-platform" name="platform" placeholder="TCGplayer">
+                            </div>
+                            <div>
+                                <label for="sale-shipping-charged">Customer Shipping Charged</label>
+                                <input type="number" step="0.01" id="sale-shipping-charged" name="customer_shipping_charged" value="0">
+                            </div>
+                            <div>
+                                <label for="sale-postage">Actual Postage Cost</label>
+                                <input type="number" step="0.01" id="sale-postage" name="actual_postage_cost" value="0">
+                            </div>
+                            <div>
+                                <label for="sale-fees">Platform Fees</label>
+                                <input type="number" step="0.01" id="sale-fees" name="platform_fees" value="0">
+                            </div>
+                            <div>
+                                <label for="sale-notes">Notes</label>
+                                <input type="text" id="sale-notes" name="notes">
+                            </div>
                         </div>
-                        <div>
-                            <label for="sale-platform">Platform</label>
-                            <input type="text" id="sale-platform" name="platform" placeholder="TCGplayer">
-                        </div>
-                        <div>
-                            <label for="sale-shipping-charged">Customer Shipping Charged</label>
-                            <input type="number" step="0.01" id="sale-shipping-charged" name="customer_shipping_charged" value="0">
-                        </div>
-                        <div>
-                            <label for="sale-postage">Actual Postage Cost</label>
-                            <input type="number" step="0.01" id="sale-postage" name="actual_postage_cost" value="0">
-                        </div>
-                        <div>
-                            <label for="sale-fees">Platform Fees</label>
-                            <input type="number" step="0.01" id="sale-fees" name="platform_fees" value="0">
-                        </div>
-                        <div>
-                            <label for="sale-notes">Notes</label>
-                            <input type="text" id="sale-notes" name="notes">
-                        </div>
-                    </div>
 
-                    <div class="sale-section">
-                        <h3>Items Sold</h3>
-                        <div class="sale-controls">
-                            <select id="sale-item-select"></select>
-                            <input type="number" id="sale-item-quantity" min="1" value="1">
-                            <input type="number" step="0.01" id="sale-item-price" placeholder="Sale price each">
-                            <button type="button" id="add-sale-item" class="secondary">Add Item</button>
+                        <div class="sale-section">
+                            <h3>Items Sold</h3>
+                            <div class="sale-controls">
+                                <select id="sale-item-select"></select>
+                                <input type="number" id="sale-item-quantity" min="1" value="1">
+                                <input type="number" step="0.01" id="sale-item-price" placeholder="Sale price each">
+                                <button type="button" id="add-sale-item" class="secondary">Add Item</button>
+                            </div>
+                            <div class="table-wrapper">
+                                <table id="sale-items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Type</th>
+                                            <th>Qty</th>
+                                            <th>Sale Price</th>
+                                            <th>Remove</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="table-wrapper">
-                            <table id="sale-items-table">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Type</th>
-                                        <th>Qty</th>
-                                        <th>Sale Price</th>
-                                        <th>Remove</th>
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
 
-                    <div class="sale-section">
-                        <h3>Shipping Supplies Used</h3>
-                        <div class="sale-controls">
-                            <select id="sale-supply-select"></select>
-                            <input type="number" id="sale-supply-quantity" min="1" value="1">
-                            <button type="button" id="add-sale-supply" class="secondary">Add Supply</button>
+                        <div class="sale-section">
+                            <h3>Shipping Supplies Used</h3>
+                            <div class="sale-controls">
+                                <select id="sale-supply-select"></select>
+                                <input type="number" id="sale-supply-quantity" min="1" value="1">
+                                <button type="button" id="add-sale-supply" class="secondary">Add Supply</button>
+                            </div>
+                            <div class="table-wrapper">
+                                <table id="sale-supplies-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Description</th>
+                                            <th>Qty Used</th>
+                                            <th>Remove</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="table-wrapper">
-                            <table id="sale-supplies-table">
-                                <thead>
-                                    <tr>
-                                        <th>Description</th>
-                                        <th>Qty Used</th>
-                                        <th>Remove</th>
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
 
-                    <div class="form-actions">
-                        <button type="submit">Record Sale</button>
-                    </div>
-                </form>
+                        <div class="form-actions">
+                            <button type="submit">Record Sale</button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <div class="panel">
                 <header class="panel-header">
                     <h2>Sales History</h2>
                 </header>
-                <div class="sales-history">
-                    {% for event in sale_events %}
-                    <details class="sale-entry">
-                        <summary>
-                            <span>{{ event.sale_date|dateformat }}</span>
-                            <span>{{ event.platform or 'Direct' }}</span>
-                            <span>{{ event.total_profit_loss|currency }}</span>
-                            <form method="post" action="{{ url_for('delete_sale', event_id=event.id) }}" onsubmit="return confirm('Delete this sale event?');">
-                                <button type="submit" class="danger">Delete</button>
-                            </form>
-                        </summary>
-                        <div class="sale-entry-body">
-                            <h4>Items</h4>
-                            <ul>
-                                {% for item in event.items %}
-                                <li>
-                                    {{ item.quantity }}x {{ item.item_name }} ({{ item.set_code }}) at {{ item.sale_price_per_unit|currency }} each &mdash; Profit {{ item.profit_loss|currency }}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% if event.supplies %}
-                            <h4>Supplies</h4>
-                            <ul>
-                                {% for supply in event.supplies %}
-                                <li>{{ supply.quantity_used }}x batch #{{ supply.supply_batch_id }} at {{ supply.unit_cost|currency }} ({{ supply.total_cost|currency }})</li>
-                                {% endfor %}
-                            </ul>
-                            {% endif %}
-                            <div class="sale-metrics">
-                                <p>Gross: {{ event.total_sale_amount|currency }}</p>
-                                <p>COGS: {{ event.total_cost_of_goods|currency }}</p>
-                                <p>Supplies: {{ event.total_supplies_cost_for_sale|currency }}</p>
-                                <p>Shipping Charged: {{ event.customer_shipping_charged|currency }}</p>
-                                <p>Postage: {{ event.actual_postage_cost|currency }}</p>
-                                <p>Platform Fees: {{ event.platform_fees|currency }}</p>
-                                <p>Net Profit/Loss: <strong>{{ event.total_profit_loss|currency }}</strong></p>
-                                <p>Notes: {{ event.notes }}</p>
+                <div class="panel-body">
+                    <div class="sales-history">
+                        {% for event in sale_events %}
+                        <details class="sale-entry">
+                            <summary>
+                                <span>{{ event.sale_date|dateformat }}</span>
+                                <span>{{ event.platform or 'Direct' }}</span>
+                                <span>{{ event.total_profit_loss|currency }}</span>
+                                <form method="post" action="{{ url_for('delete_sale', event_id=event.id) }}" onsubmit="return confirm('Delete this sale event?');">
+                                    <button type="submit" class="danger">Delete</button>
+                                </form>
+                            </summary>
+                            <div class="sale-entry-body">
+                                <h4>Items</h4>
+                                <ul>
+                                    {% for item in event.items %}
+                                    <li>
+                                        {{ item.quantity }}x {{ item.item_name }} ({{ item.set_code }}) at {{ item.sale_price_per_unit|currency }} each &mdash; Profit {{ item.profit_loss|currency }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                                {% if event.supplies %}
+                                <h4>Supplies</h4>
+                                <ul>
+                                    {% for supply in event.supplies %}
+                                    <li>{{ supply.quantity_used }}x batch #{{ supply.supply_batch_id }} at {{ supply.unit_cost|currency }} ({{ supply.total_cost|currency }})</li>
+                                    {% endfor %}
+                                </ul>
+                                {% endif %}
+                                <div class="sale-metrics">
+                                    <p>Gross: {{ event.total_sale_amount|currency }}</p>
+                                    <p>COGS: {{ event.total_cost_of_goods|currency }}</p>
+                                    <p>Supplies: {{ event.total_supplies_cost_for_sale|currency }}</p>
+                                    <p>Shipping Charged: {{ event.customer_shipping_charged|currency }}</p>
+                                    <p>Postage: {{ event.actual_postage_cost|currency }}</p>
+                                    <p>Platform Fees: {{ event.platform_fees|currency }}</p>
+                                    <p>Net Profit/Loss: <strong>{{ event.total_profit_loss|currency }}</strong></p>
+                                    <p>Notes: {{ event.notes }}</p>
+                                </div>
                             </div>
-                        </div>
-                    </details>
-                    {% else %}
-                    <p>No sales recorded yet.</p>
-                    {% endfor %}
+                        </details>
+                        {% else %}
+                        <p>No sales recorded yet.</p>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section id="ledger" class="tab-section">
+        
+<section id="ledger" class="tab-section">
             <div class="panel">
                 <header class="panel-header">
                     <h2>Add Ledger Entry</h2>
                 </header>
-                <form method="post" action="{{ url_for('add_ledger_entry') }}" class="ledger-form">
-                    <div class="form-row">
-                        <label for="ledger-date">Date</label>
-                        <input type="date" id="ledger-date" name="entry_date" value="{{ today|dateformat }}">
-                    </div>
-                    <div class="form-row">
-                        <label for="ledger-description">Description</label>
-                        <input type="text" id="ledger-description" name="description" required>
-                    </div>
-                    <div class="form-row">
-                        <label for="ledger-amount">Amount</label>
-                        <input type="number" step="0.01" id="ledger-amount" name="amount" required>
-                    </div>
-                    <div class="form-row">
-                        <label for="ledger-category">Category</label>
-                        <input type="text" id="ledger-category" name="category">
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit">Add Entry</button>
-                    </div>
-                </form>
+                <div class="panel-body">
+                    <form method="post" action="{{ url_for('add_ledger_entry') }}" class="ledger-form">
+                        <div class="form-row">
+                            <label for="ledger-date">Date</label>
+                            <input type="date" id="ledger-date" name="entry_date" value="{{ today|dateformat }}">
+                        </div>
+                        <div class="form-row">
+                            <label for="ledger-description">Description</label>
+                            <input type="text" id="ledger-description" name="description" required>
+                        </div>
+                        <div class="form-row">
+                            <label for="ledger-amount">Amount</label>
+                            <input type="number" step="0.01" id="ledger-amount" name="amount" required>
+                        </div>
+                        <div class="form-row">
+                            <label for="ledger-category">Category</label>
+                            <input type="text" id="ledger-category" name="category">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit">Add Entry</button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <div class="panel">
                 <header class="panel-header">
                     <h2>Ledger Entries</h2>
                 </header>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Category</th>
-                                <th>Amount</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for entry in ledger_entries %}
-                            <tr>
-                                <td>{{ entry.entry_date|dateformat }}</td>
-                                <td>{{ entry.description }}</td>
-                                <td>{{ entry.category }}</td>
-                                <td>{{ entry.amount|currency }}</td>
-                                <td>
-                                    <form method="post" action="{{ url_for('delete_ledger_entry', entry_id=entry.id) }}" onsubmit="return confirm('Delete this ledger entry?');">
-                                        <button type="submit" class="danger">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="panel-body">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in ledger_entries %}
+                                <tr>
+                                    <td>{{ entry.entry_date|dateformat }}</td>
+                                    <td>{{ entry.description }}</td>
+                                    <td>{{ entry.category }}</td>
+                                    <td>{{ entry.amount|currency }}</td>
+                                    <td>
+                                        <form method="post" action="{{ url_for('delete_ledger_entry', entry_id=entry.id) }}" onsubmit="return confirm('Delete this ledger entry?');">
+                                            <button type="submit" class="danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </section>

@@ -369,6 +369,21 @@ class Database:
         with connection_cursor(commit=True) as cur:
             cur.execute("ALTER TABLE sale_events ADD COLUMN IF NOT EXISTS platform TEXT")
 
+    def _ensure_sale_items_columns(self) -> None:
+        statements = [
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS inventory_type TEXT",
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS inventory_id INTEGER",
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS item_name TEXT",
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS set_code TEXT",
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS quantity INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS sale_price_per_unit NUMERIC(12, 2) NOT NULL DEFAULT 0",
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS acquisition_price_per_unit NUMERIC(12, 2) NOT NULL DEFAULT 0",
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS profit_loss NUMERIC(12, 2) NOT NULL DEFAULT 0",
+        ]
+        with connection_cursor(commit=True) as cur:
+            for statement in statements:
+                cur.execute(statement)
+
     def bulk_update_cards(self, filters: Dict[str, Any], updates: Dict[str, Any]) -> int:
         if not isinstance(filters, dict) or not isinstance(updates, dict):
             raise ValueError('Invalid payload for bulk update.')
@@ -830,6 +845,7 @@ class Database:
             )
             sale_event_id = cur.fetchone()["id"]
 
+        self._ensure_sale_items_columns()
         for item_row in sale_items_rows:
             self._adjust_inventory_quantity(
                 item_row["inventory_type"], item_row["inventory_id"], -item_row["quantity"]

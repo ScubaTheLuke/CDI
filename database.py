@@ -361,6 +361,78 @@ class Database:
                 """
             , values)
 
+    def bulk_update_cards(self, filters: Dict[str, Any], updates: Dict[str, Any]) -> int:
+        if not isinstance(filters, dict) or not isinstance(updates, dict):
+            raise ValueError('Invalid payload for bulk update.')
+
+        update_clauses: List[str] = []
+        update_values: List[Any] = []
+        for key, value in updates.items():
+            if value is None or (isinstance(value, str) and not value.strip()):
+                continue
+            if key == 'quantity':
+                try:
+                    update_values.append(int(value))
+                except (TypeError, ValueError) as exc:
+                    raise ValueError('Quantity must be an integer.') from exc
+                update_clauses.append('quantity = %s')
+            elif key in {'acquisition_price', 'market_price'}:
+                try:
+                    update_values.append(_to_decimal(value))
+                except Exception as exc:
+                    raise ValueError('Prices must be numeric.') from exc
+                update_clauses.append(f"{key} = %s")
+            else:
+                raise ValueError(f"Unsupported update field: {key}")
+
+        if not update_clauses:
+            raise ValueError('Provide at least one field to update.')
+
+        where_clauses: List[str] = []
+        filter_values: List[Any] = []
+        for key, value in filters.items():
+            if value is None or (isinstance(value, str) and not value.strip()):
+                continue
+            if key == 'set_code':
+                filter_values.append(str(value).strip())
+                where_clauses.append('LOWER(set_code) = LOWER(%s)')
+            elif key == 'condition':
+                filter_values.append(str(value).strip())
+                where_clauses.append('LOWER(condition) = LOWER(%s)')
+            elif key == 'language':
+                filter_values.append(str(value).strip())
+                where_clauses.append('LOWER(language) = LOWER(%s)')
+            elif key == 'is_foil':
+                if isinstance(value, str):
+                    normalized = value.strip().lower()
+                    if normalized in {'true', '1', 'yes', 'foil'}:
+                        filter_values.append(True)
+                    elif normalized in {'false', '0', 'no', 'nonfoil', 'non-foil'}:
+                        filter_values.append(False)
+                    else:
+                        raise ValueError('Invalid value for foil filter.')
+                else:
+                    filter_values.append(bool(value))
+                where_clauses.append('is_foil = %s')
+            else:
+                raise ValueError(f"Unsupported filter field: {key}")
+
+        if not where_clauses:
+            raise ValueError('Provide at least one filter to target cards.')
+
+        update_clauses.append('updated_at = %s')
+        update_values.append(_now())
+
+        sql = (
+            'UPDATE inventory_cards ' 
+            f"SET {', '.join(update_clauses)} "
+            f"WHERE {' AND '.join(where_clauses)}"
+        )
+
+        with connection_cursor(commit=True) as cur:
+            cur.execute(sql, update_values + filter_values)
+            return cur.rowcount
+
     def delete_single_card(self, card_id: int) -> None:
         with connection_cursor(commit=True) as cur:
             cur.execute("DELETE FROM inventory_cards WHERE id = %s", (card_id,))
@@ -435,6 +507,63 @@ class Database:
                 WHERE id = %s
                 """
             , values)
+
+    def bulk_update_sealed(self, filters: Dict[str, Any], updates: Dict[str, Any]) -> int:
+        if not isinstance(filters, dict) or not isinstance(updates, dict):
+            raise ValueError('Invalid payload for bulk update.')
+
+        update_clauses: List[str] = []
+        update_values: List[Any] = []
+        for key, value in updates.items():
+            if value is None or (isinstance(value, str) and not value.strip()):
+                continue
+            if key == 'quantity':
+                try:
+                    update_values.append(int(value))
+                except (TypeError, ValueError) as exc:
+                    raise ValueError('Quantity must be an integer.') from exc
+                update_clauses.append('quantity = %s')
+            elif key in {'acquisition_price', 'market_price'}:
+                try:
+                    update_values.append(_to_decimal(value))
+                except Exception as exc:
+                    raise ValueError('Prices must be numeric.') from exc
+                update_clauses.append(f"{key} = %s")
+            else:
+                raise ValueError(f"Unsupported update field: {key}")
+
+        if not update_clauses:
+            raise ValueError('Provide at least one field to update.')
+
+        where_clauses: List[str] = []
+        filter_values: List[Any] = []
+        for key, value in filters.items():
+            if value is None or (isinstance(value, str) and not value.strip()):
+                continue
+            if key == 'set_code':
+                filter_values.append(str(value).strip())
+                where_clauses.append('LOWER(set_code) = LOWER(%s)')
+            elif key == 'product_type':
+                filter_values.append(str(value).strip())
+                where_clauses.append('LOWER(product_type) = LOWER(%s)')
+            else:
+                raise ValueError(f"Unsupported filter field: {key}")
+
+        if not where_clauses:
+            raise ValueError('Provide at least one filter to target products.')
+
+        update_clauses.append('updated_at = %s')
+        update_values.append(_now())
+
+        sql = (
+            'UPDATE sealed_products ' 
+            f"SET {', '.join(update_clauses)} "
+            f"WHERE {' AND '.join(where_clauses)}"
+        )
+
+        with connection_cursor(commit=True) as cur:
+            cur.execute(sql, update_values + filter_values)
+            return cur.rowcount
 
     def delete_sealed_product(self, product_id: int) -> None:
         with connection_cursor(commit=True) as cur:

@@ -195,19 +195,18 @@ def add_single_card() -> Response:
 
 @app.post("/inventory/cards/bulk-update")
 def bulk_update_cards() -> Response:
-    updates = request.get_json(force=True)
-    if not isinstance(updates, list):
+    payload = request.get_json(force=True)
+    if not isinstance(payload, dict):
         return jsonify({"error": "Invalid payload"}), 400
-    for entry in updates:
-        card_id = entry.get("id")
-        if not card_id:
-            continue
-        data = {key: value for key, value in entry.items() if key != "id"}
-        try:
-            db.update_single_card(int(card_id), data)
-        except Exception as exc:
-            return jsonify({"error": str(exc), "failed_id": card_id}), 400
-    return jsonify({"status": "ok"})
+    filters = payload.get("filters") or {}
+    updates = payload.get("updates") or {}
+    try:
+        updated = db.bulk_update_cards(filters, updates)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"updated": updated})
 
 
 @app.post("/inventory/cards/<int:card_id>/delete")
@@ -276,19 +275,18 @@ def add_sealed_product() -> Response:
 
 @app.post("/inventory/sealed/bulk-update")
 def bulk_update_sealed() -> Response:
-    updates = request.get_json(force=True)
-    if not isinstance(updates, list):
+    payload = request.get_json(force=True)
+    if not isinstance(payload, dict):
         return jsonify({"error": "Invalid payload"}), 400
-    for entry in updates:
-        product_id = entry.get("id")
-        if not product_id:
-            continue
-        data = {key: value for key, value in entry.items() if key != "id"}
-        try:
-            db.update_sealed_product(int(product_id), data)
-        except Exception as exc:
-            return jsonify({"error": str(exc), "failed_id": product_id}), 400
-    return jsonify({"status": "ok"})
+    filters = payload.get("filters") or {}
+    updates = payload.get("updates") or {}
+    try:
+        updated = db.bulk_update_sealed(filters, updates)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"updated": updated})
 
 
 @app.post("/inventory/sealed/<int:product_id>/delete")

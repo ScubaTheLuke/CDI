@@ -74,202 +74,217 @@
         </section>
 
         <section id="inventory" class="tab-section">
-            <div class="panel">
-                <header class="panel-header">
-                    <div>
-                        <h2>Single Card Inventory</h2>
-                        <p>Filter by name, set, or notes.</p>
-                    </div>
-                    <div class="actions">
-                        <input type="text" id="card-filter" placeholder="Filter cards">
-                        <button id="card-mass-edit" class="secondary">Mass Update</button>
-                    </div>
-                </header>
-                <div class="panel-body">
-                    <div class="table-wrapper">
-                        <table id="cards-table">
-                            <thead>
-                                <tr>
-                                    <th><input type="checkbox" id="card-select-all"></th>
-                                    <th>Card</th>
-                                    <th>Set</th>
-                                    <th>#</th>
-                                    <th>Qty</th>
-                                    <th>Buy</th>
-                                    <th>Live Market</th>
-                                    <th>Condition</th>
-                                    <th>Language</th>
-                                    <th>Foil</th>
-                                    <th>Notes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for card in cards %}
-                                <tr data-name="{{ card.name|lower }}" data-set="{{ card.set_code|default('')|lower }}" data-notes="{{ card.notes|default('')|lower }}">
-                                    <td><input type="checkbox" class="card-select" value="{{ card.id }}"></td>
-                                    <td class="card-name-cell">
-                                        <div class="card-name-wrap">
-                                            {% if card.scryfall_image %}
-                                            <img src="{{ card.scryfall_image }}" alt="{{ card.name }}" class="card-thumb">
-                                            {% endif %}
-                                            <div class="card-name-details">
-                                                <div class="card-name-title">
-                                                    {% if card.scryfall_url %}
-                                                    <a href="{{ card.scryfall_url }}" target="_blank" rel="noopener">{{ card.name }}</a>
-                                                    {% else %}
-                                                    {{ card.name }}
-                                                    {% endif %}
-                                                </div>
-                                                <div class="card-name-meta">
-                                                    {% if card.scryfall_set_name %}
-                                                    <span class="card-set-name">{{ card.scryfall_set_name }}{% if card.scryfall_details and card.scryfall_details.rarity %} - {{ card.scryfall_details.rarity|title }}{% endif %}</span>
-                                                    {% elif card.set_code %}
-                                                    <span class="card-set-name">Set: {{ card.set_code }}</span>
-                                                    {% endif %}
-                                                    {% if card.scryfall_type_line %}
-                                                    <span class="card-type-line">{{ card.scryfall_type_line }}</span>
-                                                    {% endif %}
-                                                </div>
-                                                {% if card.scryfall_oracle %}
-                                                <div class="card-oracle-text">{{ card.scryfall_oracle.replace('\n', '<br>')|safe }}</div>
+            <div class="inventory-switcher" role="tablist" aria-label="Inventory views">
+                <button type="button" class="inventory-tab active" data-inventory-target="singles">Single Cards</button>
+                <button type="button" class="inventory-tab" data-inventory-target="sealed">Sealed Products</button>
+                <button type="button" class="inventory-tab" data-inventory-target="supplies">Shipping Supplies</button>
+            </div>
+
+            <div class="inventory-section active" data-inventory-section="singles">
+                <div class="panel">
+                    <header class="panel-header">
+                        <div>
+                            <h2>Single Card Inventory</h2>
+                            <p>Filter by name, set, or notes.</p>
+                        </div>
+                        <div class="actions">
+                            <input type="text" id="card-filter" placeholder="Filter cards">
+                            <button id="card-mass-edit" class="secondary">Advanced Update</button>
+                        </div>
+                    </header>
+                    <div class="panel-body">
+                        <div class="table-wrapper">
+                            <table id="cards-table" class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Card</th>
+                                        <th>Set</th>
+                                        <th>#</th>
+                                        <th>Qty</th>
+                                        <th>Buy</th>
+                                        <th>Live Market</th>
+                                        <th>Condition</th>
+                                        <th>Language</th>
+                                        <th>Foil</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for card in cards %}
+                                    <tr
+                                        data-name="{{ card.name|lower }}"
+                                        data-set="{{ card.set_code|default('')|lower }}"
+                                        data-notes="{{ card.notes|default('')|lower }}"
+                                        data-condition="{{ card.condition|default('')|lower }}"
+                                        data-language="{{ card.language|default('')|lower }}"
+                                        data-foil="{{ 'foil' if card.is_foil else 'nonfoil' }}"
+                                    >
+                                        <td class="card-name-cell" data-label="Card">
+                                            <div class="card-name-wrap">
+                                                {% if card.scryfall_image %}
+                                                <img src="{{ card.scryfall_image }}" alt="{{ card.name }}" class="card-thumb">
                                                 {% endif %}
+                                                <div class="card-name-details">
+                                                    <div class="card-name-title">
+                                                        {% if card.scryfall_url %}
+                                                        <a href="{{ card.scryfall_url }}" target="_blank" rel="noopener">{{ card.name }}</a>
+                                                        {% else %}
+                                                        {{ card.name }}
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="card-name-meta">
+                                                        {% if card.scryfall_set_name %}
+                                                        <span class="card-set-name">{{ card.scryfall_set_name }}{% if card.scryfall_details and card.scryfall_details.rarity %} - {{ card.scryfall_details.rarity|title }}{% endif %}</span>
+                                                        {% elif card.set_code %}
+                                                        <span class="card-set-name">Set: {{ card.set_code }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td>{{ card.set_code }}</td>
-                                    <td>{{ card.collector_number }}</td>
-                                    <td>{{ card.quantity }}</td>
-                                    <td>{{ card.acquisition_price|currency }}</td>
-                                    <td class="market-cell">
-                                        {% if card.scryfall_price %}
-                                        <div class="market-price-live">{{ card.scryfall_price|currency }}</div>
-                                        {% else %}
-                                        <div class="market-price-live muted">N/A</div>
-                                        {% endif %}
-                                        {% if card.scryfall_price_normal and card.scryfall_price != card.scryfall_price_normal %}
-                                        <div class="market-price-variant">Non-foil: {{ card.scryfall_price_normal|currency }}</div>
-                                        {% endif %}
-                                        {% if card.scryfall_price_foil and card.scryfall_price != card.scryfall_price_foil %}
-                                        <div class="market-price-variant">Foil: {{ card.scryfall_price_foil|currency }}</div>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ card.condition }}</td>
-                                    <td>{{ card.language }}</td>
-                                    <td>{{ 'Yes' if card.is_foil else 'No' }}</td>
-                                    <td>{{ card.notes }}</td>
-                                    <td>
-                                        <form method="post" action="{{ url_for('delete_card', card_id=card.id) }}" onsubmit="return confirm('Delete this card?');">
-                                            <button type="submit" class="danger">Delete</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                        </td>
+                                        <td data-label="Set">{{ card.set_code }}</td>
+                                        <td data-label="#">{{ card.collector_number }}</td>
+                                        <td data-label="Qty">{{ card.quantity }}</td>
+                                        <td data-label="Buy">{{ card.acquisition_price|currency }}</td>
+                                        <td data-label="Live Market" class="market-cell">
+                                            {% if card.scryfall_price %}
+                                            <div class="market-price-live">{{ card.scryfall_price|currency }}</div>
+                                            {% else %}
+                                            <div class="market-price-live muted">N/A</div>
+                                            {% endif %}
+                                            {% if card.scryfall_price_normal and card.scryfall_price != card.scryfall_price_normal %}
+                                            <div class="market-price-variant">Non-foil: {{ card.scryfall_price_normal|currency }}</div>
+                                            {% endif %}
+                                            {% if card.scryfall_price_foil and card.scryfall_price != card.scryfall_price_foil %}
+                                            <div class="market-price-variant">Foil: {{ card.scryfall_price_foil|currency }}</div>
+                                            {% endif %}
+                                            {% if card.market_price %}
+                                            <div class="market-price-stored">Stored: {{ card.market_price|currency }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td data-label="Condition">{{ card.condition }}</td>
+                                        <td data-label="Language">{{ card.language }}</td>
+                                        <td data-label="Foil">{{ 'Foil' if card.is_foil else 'Non-Foil' }}</td>
+                                        <td data-label="Notes">{{ card.notes }}</td>
+                                        <td data-label="Actions">
+                                            <form method="post" action="{{ url_for('delete_card', card_id=card.id) }}" onsubmit="return confirm('Delete this card?');">
+                                                <button type="submit" class="danger">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <nav id="card-pagination" class="pagination" aria-label="Card pages"></nav>
                     </div>
-                    <nav id="card-pagination" class="pagination" aria-label="Card pages"></nav>
                 </div>
             </div>
 
-            <div class="panel">
-                <header class="panel-header">
-                    <div>
-                        <h2>Sealed Product Inventory</h2>
-                        <p>Track sealed boxes, packs, and accessories.</p>
+            <div class="inventory-section" data-inventory-section="sealed">
+                <div class="panel">
+                    <header class="panel-header">
+                        <div>
+                            <h2>Sealed Product Inventory</h2>
+                            <p>Track sealed boxes, packs, and accessories.</p>
+                        </div>
+                    </header>
+                    <div class="panel-body">
+                        <div class="table-wrapper">
+                            <table id="sealed-table" class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Set</th>
+                                        <th>Type</th>
+                                        <th>Qty</th>
+                                        <th>Buy</th>
+                                        <th>Market</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in sealed_products %}
+                                    <tr
+                                        data-name="{{ product.name|lower }}"
+                                        data-set="{{ product.set_code|default('')|lower }}"
+                                        data-notes="{{ product.notes|default('')|lower }}"
+                                        data-type="{{ product.product_type|default('')|lower }}"
+                                    >
+                                        <td data-label="Name">{{ product.name }}</td>
+                                        <td data-label="Set">{{ product.set_code }}</td>
+                                        <td data-label="Type">{{ product.product_type }}</td>
+                                        <td data-label="Qty">{{ product.quantity }}</td>
+                                        <td data-label="Buy">{{ product.acquisition_price|currency }}</td>
+                                        <td data-label="Market">{{ product.market_price|currency }}</td>
+                                        <td data-label="Notes">{{ product.notes }}</td>
+                                        <td data-label="Actions">
+                                            <form method="post" action="{{ url_for('delete_sealed_product', product_id=product.id) }}" onsubmit="return confirm('Delete this sealed product?');">
+                                                <button type="submit" class="danger">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <nav id="sealed-pagination" class="pagination" aria-label="Sealed product pages"></nav>
                     </div>
-                    <div class="actions">
-                        <button id="sealed-mass-edit" class="secondary">Mass Update</button>
-                    </div>
-                </header>
-                <div class="panel-body">
-                    <div class="table-wrapper">
-                        <table id="sealed-table">
-                            <thead>
-                                <tr>
-                                    <th><input type="checkbox" id="sealed-select-all"></th>
-                                    <th>Name</th>
-                                    <th>Set</th>
-                                    <th>Type</th>
-                                    <th>Qty</th>
-                                    <th>Buy</th>
-                                    <th>Market</th>
-                                    <th>Notes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for product in sealed_products %}
-                                <tr>
-                                    <td><input type="checkbox" class="sealed-select" value="{{ product.id }}"></td>
-                                    <td>{{ product.name }}</td>
-                                    <td>{{ product.set_code }}</td>
-                                    <td>{{ product.product_type }}</td>
-                                    <td>{{ product.quantity }}</td>
-                                    <td>{{ product.acquisition_price|currency }}</td>
-                                    <td>{{ product.market_price|currency }}</td>
-                                    <td>{{ product.notes }}</td>
-                                    <td>
-                                        <form method="post" action="{{ url_for('delete_sealed_product', product_id=product.id) }}" onsubmit="return confirm('Delete this sealed product?');">
-                                            <button type="submit" class="danger">Delete</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    <nav id="sealed-pagination" class="pagination" aria-label="Sealed product pages"></nav>
                 </div>
             </div>
 
-            <div class="panel">
-                <header class="panel-header">
-                    <div>
-                        <h2>Shipping Supply Batches</h2>
-                        <p>Monitor postage materials consumed in sales.</p>
-                    </div>
-                </header>
-                <div class="panel-body">
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Description</th>
-                                    <th>Supplier</th>
-                                    <th>Unit Cost</th>
-                                    <th>Purchased</th>
-                                    <th>Available</th>
-                                    <th>Date</th>
-                                    <th>Notes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for batch in supply_batches %}
-                                <tr>
-                                    <td>{{ batch.description }}</td>
-                                    <td>{{ batch.supplier }}</td>
-                                    <td>{{ batch.unit_cost|currency }}</td>
-                                    <td>{{ batch.quantity_purchased }}</td>
-                                    <td>{{ batch.quantity_available }}</td>
-                                    <td>{{ batch.purchased_at|dateformat }}</td>
-                                    <td>{{ batch.notes }}</td>
-                                    <td>
-                                        <form method="post" action="{{ url_for('delete_supply_batch', batch_id=batch.id) }}" onsubmit="return confirm('Delete this supply batch?');">
-                                            <button type="submit" class="danger">Delete</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+            <div class="inventory-section" data-inventory-section="supplies">
+                <div class="panel">
+                    <header class="panel-header">
+                        <div>
+                            <h2>Shipping Supply Batches</h2>
+                            <p>Monitor postage materials consumed in sales.</p>
+                        </div>
+                    </header>
+                    <div class="panel-body">
+                        <div class="table-wrapper">
+                            <table class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th>Supplier</th>
+                                        <th>Unit Cost</th>
+                                        <th>Purchased</th>
+                                        <th>Available</th>
+                                        <th>Date</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for batch in supply_batches %}
+                                    <tr>
+                                        <td data-label="Description">{{ batch.description }}</td>
+                                        <td data-label="Supplier">{{ batch.supplier }}</td>
+                                        <td data-label="Unit Cost">{{ batch.unit_cost|currency }}</td>
+                                        <td data-label="Purchased">{{ batch.quantity_purchased }}</td>
+                                        <td data-label="Available">{{ batch.quantity_available }}</td>
+                                        <td data-label="Date">{{ batch.purchased_at|dateformat }}</td>
+                                        <td data-label="Notes">{{ batch.notes }}</td>
+                                        <td data-label="Actions">
+                                            <form method="post" action="{{ url_for('delete_supply_batch', batch_id=batch.id) }}" onsubmit="return confirm('Delete this supply batch?');">
+                                                <button type="submit" class="danger">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
         <section id="add-items" class="tab-section">
+<section id="add-items" class="tab-section">
             <div class="forms-grid">
                 <form class="form-card" method="post" action="{{ url_for('add_single_card') }}">
                     <h2>Add Single Card</h2>
@@ -623,18 +638,47 @@
         <div class="modal">
             <h3 id="modal-title">Mass Update</h3>
             <form id="modal-form">
-                <div class="form-row">
-                    <label for="modal-quantity">Quantity</label>
-                    <input type="number" id="modal-quantity" name="quantity" placeholder="Leave blank to skip">
-                </div>
-                <div class="form-row">
-                    <label for="modal-buy">Buy Price (each)</label>
-                    <input type="number" step="0.01" id="modal-buy" name="acquisition_price" placeholder="Leave blank to skip">
-                </div>
-                <div class="form-row">
-                    <label for="modal-market">Market Price (each)</label>
-                    <input type="number" step="0.01" id="modal-market" name="market_price" placeholder="Leave blank to skip">
-                </div>
+                <fieldset class="modal-fieldset">
+                    <legend>Filters</legend>
+                    <p class="modal-help">Only cards matching all provided filters will be updated. Leave a field blank to ignore it.</p>
+                    <div class="form-row">
+                        <label for="filter-set-code">Set Code</label>
+                        <input type="text" id="filter-set-code" name="filter_set_code" placeholder="e.g., MH3">
+                    </div>
+                    <div class="form-row">
+                        <label for="filter-condition">Condition</label>
+                        <input type="text" id="filter-condition" name="filter_condition" placeholder="e.g., NM">
+                    </div>
+                    <div class="form-row">
+                        <label for="filter-language">Language</label>
+                        <input type="text" id="filter-language" name="filter_language" placeholder="e.g., EN">
+                    </div>
+                    <div class="form-row">
+                        <label for="filter-finish">Finish</label>
+                        <select id="filter-finish" name="filter_finish">
+                            <option value="">Foil or Non-Foil</option>
+                            <option value="foil">Foil</option>
+                            <option value="nonfoil">Non-Foil</option>
+                        </select>
+                    </div>
+                </fieldset>
+                <fieldset class="modal-fieldset">
+                    <legend>Fields to Update</legend>
+                    <p class="modal-help">Only supply values you want to override for the filtered cards.</p>
+                    <div class="form-row">
+                        <label for="modal-quantity">Quantity</label>
+                        <input type="number" id="modal-quantity" name="quantity" placeholder="Leave blank to skip">
+                    </div>
+                    <div class="form-row">
+                        <label for="modal-buy">Buy Price (each)</label>
+                        <input type="number" step="0.01" id="modal-buy" name="acquisition_price" placeholder="Leave blank to skip">
+                    </div>
+                    <div class="form-row">
+                        <label for="modal-market">Market Price (each)</label>
+                        <input type="number" step="0.01" id="modal-market" name="market_price" placeholder="Leave blank to skip">
+                    </div>
+                </fieldset>
+                <p class="modal-warning">Provide at least one filter and one field to update to run the bulk change.</p>
                 <div class="modal-actions">
                     <button type="button" id="modal-cancel" class="secondary">Cancel</button>
                     <button type="submit">Update</button>

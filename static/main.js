@@ -58,6 +58,19 @@
         }
     }
 
+    const inventoryTabs = document.querySelectorAll('.inventory-tab');
+    const inventorySections = document.querySelectorAll('.inventory-section');
+    if (inventoryTabs.length && inventorySections.length) {
+        inventoryTabs.forEach((tab) => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.inventoryTarget;
+                inventoryTabs.forEach((btn) => btn.classList.toggle('active', btn === tab));
+                inventorySections.forEach((section) => {
+                    section.classList.toggle('active', section.dataset.inventorySection === target);
+                });
+            });
+        });
+    }
 
     function setupInventoryTable(config) {
         const table = document.getElementById(config.tableId);
@@ -66,7 +79,6 @@
             return;
         }
         const filterInput = config.filterInputId ? document.getElementById(config.filterInputId) : null;
-        const masterCheckbox = config.masterCheckboxId ? document.getElementById(config.masterCheckboxId) : null;
         const allRows = Array.from(table.querySelectorAll('tbody tr'));
         if (!allRows.length) {
             pagination.classList.add('pagination--empty');
@@ -174,9 +186,6 @@
             const start = (currentPage - 1) * pageSize;
             const visibleRows = filteredRows.slice(start, start + pageSize);
             visibleRows.forEach((row) => row.classList.remove('hidden'));
-            if (masterCheckbox) {
-                masterCheckbox.checked = false;
-            }
             renderPagination(totalPages);
         }
 
@@ -203,43 +212,23 @@
         applyFilter(filterInput ? filterInput.value : '');
     }
 
-    function attachSelectAll(masterId, selector) {
-        const master = document.getElementById(masterId);
-        if (!master) {
-            return;
-        }
-        master.addEventListener('change', () => {
-            document.querySelectorAll(selector).forEach((checkbox) => {
-                const row = checkbox.closest('tr');
-                if (!row || row.classList.contains('hidden')) {
-                    checkbox.checked = false;
-                    return;
-                }
-                checkbox.checked = master.checked;
-            });
-        });
-    }
-
-    attachSelectAll('card-select-all', '.card-select');
-    attachSelectAll('sealed-select-all', '.sealed-select');
-
     setupInventoryTable({
         tableId: 'cards-table',
         paginationId: 'card-pagination',
         filterInputId: 'card-filter',
-        masterCheckboxId: 'card-select-all',
-        searchKeys: ['name', 'set', 'notes'],
-        pageSizeDesktop: 25,
-        pageSizeMobile: 12,
+        searchKeys: ['name', 'set', 'notes', 'condition', 'language', 'foil'],
+        pageSizeDesktop: 20,
+        pageSizeMobile: 10,
     });
 
     setupInventoryTable({
         tableId: 'sealed-table',
         paginationId: 'sealed-pagination',
-        masterCheckboxId: 'sealed-select-all',
+        searchKeys: ['name', 'set', 'notes', 'type'],
         pageSizeDesktop: 15,
         pageSizeMobile: 8,
     });
+
 
     const modalOverlay = document.getElementById('modal-overlay');
     const modalForm = document.getElementById('modal-form');
@@ -250,9 +239,11 @@
     function openModal(context) {
         modalContext = context;
         if (modalTitle) {
-            modalTitle.textContent = context === 'cards' ? 'Mass Update Cards' : 'Mass Update Sealed Products';
+            modalTitle.textContent = 'Bulk Update Cards';
         }
-        modalForm.reset();
+        if (modalForm) {
+            modalForm.reset();
+        }
         modalOverlay.classList.remove('hidden');
     }
 
@@ -265,11 +256,6 @@
     if (cardMassButton) {
         cardMassButton.addEventListener('click', () => openModal('cards'));
     }
-    const sealedMassButton = document.getElementById('sealed-mass-edit');
-    if (sealedMassButton) {
-        sealedMassButton.addEventListener('click', () => openModal('sealed'));
-    }
-
     if (modalCancel) {
         modalCancel.addEventListener('click', closeModal);
     }
@@ -285,36 +271,88 @@
     if (modalForm) {
         modalForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            if (!modalContext) return;
+            if (modalContext !== 'cards') {
+                closeModal();
+                return;
+            }
             const formData = new FormData(modalForm);
-            const payload = {};
-            formData.forEach((value, key) => {
-                if (value !== null && value !== '') {
-                    payload[key] = value;
+            const filters = {};
+            const updates = {};
+
+            const setCode = (formData.get('filter_set_code') || '').trim();
+            if (setCode) {
+                filters.set_code = setCode;
+            }
+            const condition = (formData.get('filter_condition') || '').trim();
+            if (condition) {
+                filters.condition = condition;
+            }
+            const language = (formData.get('filter_language') || '').trim();
+            if (language) {
+                filters.language = language;
+            }
+            const finish = formData.get('filter_finish');
+            if (finish === 'foil') {
+                filters.is_foil = true;
+            } else if (finish === 'nonfoil') {
+                filters.is_foil = false;
+            }
+
+            const quantityValue = (formData.get('quantity') || '').trim();
+            if (quantityValue) {
+                const quantity = Number(quantityValue);
+                if (!Number.isFinite(quantity)) {
+                    alert('Quantity must be a number.');
+                    return;
                 }
-            });
-            if (!Object.keys(payload).length) {
+                updates.quantity = quantity;
+            }
+
+            const buyValue = (formData.get('acquisition_price') || '').trim();
+            if (buyValue) {
+                const price = Number(buyValue);
+                if (!Number.isFinite(price)) {
+                    alert('Buy price must be numeric.');
+                    return;
+                }
+                updates.acquisition_price = buyValue;
+            }
+
+            const marketValue = (formData.get('market_price') || '').trim();
+            if (marketValue) {
+                const price = Number(marketValue);
+                if (!Number.isFinite(price)) {
+                    alert('Market price must be numeric.');
+                    return;
+                }
+                updates.market_price = marketValue;
+            }
+
+            if (!Object.keys(filters).length) {
+                alert('Add at least one filter to target cards.');
+                return;
+            }
+            if (!Object.keys(updates).length) {
                 alert('Enter at least one field to update.');
                 return;
             }
-            const selection = Array.from(document.querySelectorAll(modalContext === 'cards' ? '.card-select:checked' : '.sealed-select:checked'));
-            if (!selection.length) {
-                alert('Select at least one inventory item to update.');
-                return;
-            }
-            const items = selection.map((checkbox) => ({ id: Number(checkbox.value), ...payload }));
-            const endpoint = modalContext === 'cards' ? '/inventory/cards/bulk-update' : '/inventory/sealed/bulk-update';
+
+            const payload = { filters, updates };
+
             try {
-                const response = await fetch(endpoint, {
+                const response = await fetch('/inventory/cards/bulk-update', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(items)
+                    body: JSON.stringify(payload)
                 });
+                const result = await response.json().catch(() => ({}));
                 if (!response.ok) {
-                    const error = await response.json().catch(() => ({ error: 'Update failed' }));
-                    alert(error.error || 'Update failed');
+                    alert(result.error || 'Update failed');
                     return;
                 }
+                closeModal();
+                const updated = typeof result.updated === 'number' ? result.updated : 0;
+                alert(updated ? `Updated ${updated} cards.` : 'No cards matched the filters.');
                 location.reload();
             } catch (error) {
                 alert('Unable to complete update.');

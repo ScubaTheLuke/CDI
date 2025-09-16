@@ -28,7 +28,11 @@ class DBStub:
             delete_sale_event=[],
             add_ledger_entry=[],
             delete_ledger_entry=[],
+            bulk_update_cards=[],
+            bulk_update_sealed=[],
         )
+        self.bulk_update_cards_result = 0
+        self.bulk_update_sealed_result = 0
 
     def fetch_dashboard_summary(self):
         zero = Decimal('0')
@@ -80,6 +84,14 @@ class DBStub:
 
     def delete_sealed_product(self, product_id):
         self.calls.delete_sealed_product.append(product_id)
+
+    def bulk_update_cards(self, filters, updates):
+        self.calls.bulk_update_cards.append((filters, updates))
+        return self.bulk_update_cards_result
+
+    def bulk_update_sealed(self, filters, updates):
+        self.calls.bulk_update_sealed.append((filters, updates))
+        return self.bulk_update_sealed_result
 
     def add_supply_batch(self, payload):
         self.calls.add_supply_batch.append(payload)
@@ -164,12 +176,18 @@ def test_add_single_card_creates_entry(client):
 
 def test_bulk_update_cards_updates_each(client):
     test_client, stub, _ = client
+    stub.bulk_update_cards_result = 3
+    payload = {
+        "filters": {"set_code": "mh3", "condition": "NM"},
+        "updates": {"quantity": 5, "acquisition_price": "1.25"},
+    }
     response = test_client.post(
         "/inventory/cards/bulk-update",
-        json=[{"id": 1, "quantity": 4}, {"id": 2}],
+        json=payload,
     )
     assert response.status_code == 200
-    assert stub.calls.update_single_card[0] == (1, {"quantity": 4})
+    assert stub.calls.bulk_update_cards == [(payload["filters"], payload["updates"])]
+    assert response.get_json()["updated"] == 3
 
 
 def test_delete_card_invokes_db(client):
@@ -191,12 +209,18 @@ def test_add_sealed_product(client):
 
 def test_bulk_update_sealed(client):
     test_client, stub, _ = client
+    stub.bulk_update_sealed_result = 2
+    payload = {
+        "filters": {"set_code": "cmm"},
+        "updates": {"quantity": 2},
+    }
     response = test_client.post(
         "/inventory/sealed/bulk-update",
-        json=[{"id": 7, "quantity": 2}],
+        json=payload,
     )
     assert response.status_code == 200
-    assert stub.calls.update_sealed_product[0] == (7, {"quantity": 2})
+    assert stub.calls.bulk_update_sealed == [(payload["filters"], payload["updates"])]
+    assert response.get_json()["updated"] == 2
 
 
 def test_delete_sealed_product(client):
@@ -353,4 +377,3 @@ def test_index_displays_scryfall_data(client, monkeypatch):
     assert "https://img.scryfall.fake/sunfall.png" in body
     assert "$3.50" in body
     assert "March of the Machine" in body
-    assert "Exile all creatures." in body

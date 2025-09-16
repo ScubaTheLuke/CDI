@@ -206,6 +206,46 @@ main {
     gap: clamp(1.5rem, 2vw, 2.75rem);
 }
 
+.inventory-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.inventory-tab {
+    border: 1px solid var(--border-color);
+    background: var(--bg-panel);
+    color: var(--text-color);
+    padding: 0.55rem 1.1rem;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.inventory-tab:hover,
+.inventory-tab:focus-visible {
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.inventory-tab.active {
+    background: var(--accent);
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.inventory-section {
+    display: none;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.inventory-section.active {
+    display: flex;
+}
+
 .cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -325,7 +365,18 @@ main {
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 600px;
+    min-width: 0;
+}
+
+.inventory-table {
+    min-width: 0;
+    table-layout: auto;
+}
+
+.inventory-table th,
+.inventory-table td {
+    white-space: normal;
+    word-break: break-word;
 }
 
 thead {
@@ -541,6 +592,30 @@ button.link {
     box-shadow: var(--shadow);
 }
 
+.modal-fieldset {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.modal-fieldset legend {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.modal-help {
+    margin: 0 0 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.modal-warning {
+    margin: 0.75rem 0 0;
+    color: var(--accent);
+    font-size: 0.9rem;
+}
+
 .modal-actions {
     display: flex;
     justify-content: flex-end;
@@ -554,6 +629,52 @@ button.link {
 
 [data-set-symbol].invert {
     filter: invert(1);
+}
+
+@media (max-width: 900px) {
+    .inventory-table thead {
+        display: none;
+    }
+
+    .inventory-table tbody {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .inventory-table tbody tr {
+        display: grid;
+        gap: 0.65rem;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        background: var(--bg-panel-alt);
+    }
+
+    .inventory-table td {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0;
+    }
+
+    .inventory-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+
+    .inventory-table td[data-label="Actions"] {
+        justify-content: flex-end;
+    }
+
+    .inventory-table td[data-label="Notes"] {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .inventory-table td[data-label="Notes"]::before {
+        margin-bottom: 0.25rem;
+    }
 }
 
 @media (max-width: 768px) {
@@ -590,7 +711,7 @@ button.link {
     }
 }
 .card-name-cell {
-    min-width: 18rem;
+    min-width: 14rem;
 }
 
 .card-name-wrap {
@@ -611,7 +732,7 @@ button.link {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-    max-width: 420px;
+    max-width: 360px;
 }
 
 .card-name-title a {

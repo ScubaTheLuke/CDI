@@ -371,18 +371,22 @@ class Database:
 
     def _ensure_sale_items_columns(self) -> None:
         statements = [
-            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS inventory_type TEXT",
-            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS inventory_id INTEGER",
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS item_type TEXT",
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS item_id INTEGER",
             "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS item_name TEXT",
             "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS set_code TEXT",
             "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS quantity INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS sale_price_per_unit NUMERIC(12, 2) NOT NULL DEFAULT 0",
             "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS acquisition_price_per_unit NUMERIC(12, 2) NOT NULL DEFAULT 0",
             "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS profit_loss NUMERIC(12, 2) NOT NULL DEFAULT 0",
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS inventory_type TEXT",
+            "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS inventory_id INTEGER",
         ]
         with connection_cursor(commit=True) as cur:
             for statement in statements:
                 cur.execute(statement)
+            cur.execute("UPDATE sale_items SET inventory_type = item_type WHERE inventory_type IS NULL AND item_type IS NOT NULL")
+            cur.execute("UPDATE sale_items SET inventory_id = item_id WHERE inventory_id IS NULL AND item_id IS NOT NULL")
 
     def bulk_update_cards(self, filters: Dict[str, Any], updates: Dict[str, Any]) -> int:
         if not isinstance(filters, dict) or not isinstance(updates, dict):
@@ -857,10 +861,11 @@ class Database:
                 cur.execute(
                     """
                     INSERT INTO sale_items (
-                        sale_event_id, inventory_type, inventory_id, item_name, set_code,
-                        quantity, sale_price_per_unit, acquisition_price_per_unit, profit_loss
+                        sale_event_id, item_type, item_id, item_name, set_code, quantity,
+                        sale_price_per_unit, acquisition_price_per_unit, profit_loss,
+                        inventory_type, inventory_id
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     [
                         sale_event_id,
@@ -872,6 +877,8 @@ class Database:
                         item_row["sale_price_per_unit"],
                         item_row["acquisition_price_per_unit"],
                         profit,
+                        item_row["inventory_type"],
+                        item_row["inventory_id"],
                     ],
                 )
 

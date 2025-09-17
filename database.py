@@ -781,172 +781,174 @@ def _get_sale_item_columns(self) -> List[str]:
             return _to_decimal(row["unit_cost"]) * Decimal(quantity)
 
 
-def record_multi_item_sale(self, payload: Dict[str, Any]) -> int:
-    self._ensure_sale_schema()
 
-    sale_date = payload.get("sale_date") or date.today()
-    items = payload.get("items", [])
-    supplies = payload.get("supplies", [])
-    if not items:
-        raise ValueError("At least one sale item is required")
+    def record_multi_item_sale(self, payload: Dict[str, Any]) -> int:
+        self._ensure_sale_schema()
 
-    sale_items_rows: List[Dict[str, Any]] = []
-    total_sale_amount = Decimal("0")
-    total_cost_of_goods = Decimal("0")
+        sale_date = payload.get("sale_date") or date.today()
+        items = payload.get("items", [])
+        supplies = payload.get("supplies", [])
+        if not items:
+            raise ValueError("At least one sale item is required")
 
-    for item in items:
-        inventory_type = (item.get("inventory_type") or "").strip()
-        if inventory_type not in {"single", "sealed"}:
-            raise ValueError("Sale items must include an inventory_type of 'single' or 'sealed'.")
-        try:
-            inventory_id = int(item.get("inventory_id", 0))
-        except (TypeError, ValueError):
-            raise ValueError("Sale items must include a valid inventory_id.")
-        quantity = int(item.get("quantity", 0))
-        if quantity <= 0:
-            raise ValueError("Sale item quantities must be greater than zero.")
+        sale_items_rows: List[Dict[str, Any]] = []
+        total_sale_amount = Decimal("0")
+        total_cost_of_goods = Decimal("0")
 
-        record = self._get_inventory_record(inventory_type, inventory_id)
-        sale_price_each = _to_decimal(item.get("sale_price_per_unit"))
-        acquisition_price = _to_decimal(record.get("acquisition_price"))
+        for item in items:
+            inventory_type = (item.get("inventory_type") or "").strip()
+            if inventory_type not in {"single", "sealed"}:
+                raise ValueError("Sale items must include an inventory_type of 'single' or 'sealed'.")
+            try:
+                inventory_id = int(item.get("inventory_id", 0))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("Sale items must include a valid inventory_id.") from exc
+            quantity = int(item.get("quantity", 0))
+            if quantity <= 0:
+                raise ValueError("Sale item quantities must be greater than zero.")
 
-        total_sale_amount += sale_price_each * Decimal(quantity)
-        total_cost_of_goods += acquisition_price * Decimal(quantity)
+            record = self._get_inventory_record(inventory_type, inventory_id)
+            sale_price_each = _to_decimal(item.get("sale_price_per_unit"))
+            acquisition_price = _to_decimal(record.get("acquisition_price"))
 
-        sale_items_rows.append(
-            {
-                "inventory_type": inventory_type,
-                "inventory_id": inventory_id,
-                "item_name": record.get("name"),
-                "set_code": record.get("set_code"),
-                "quantity": quantity,
-                "sale_price_per_unit": sale_price_each,
-                "acquisition_price_per_unit": acquisition_price,
-                "profit_loss": (sale_price_each - acquisition_price) * Decimal(quantity),
-            }
-        )
+            total_sale_amount += sale_price_each * Decimal(quantity)
+            total_cost_of_goods += acquisition_price * Decimal(quantity)
 
-    total_supplies_cost = Decimal("0")
-    supplies_rows: List[Dict[str, Any]] = []
-    for supply in supplies:
-        try:
-            batch_id = int(supply.get("supply_batch_id"))
-            quantity = int(supply.get("quantity_used", 0))
-        except (TypeError, ValueError):
-            continue
-        if quantity <= 0:
-            continue
-        cost = self._consume_supply(batch_id, quantity)
-
-        unit_cost = (cost / Decimal(quantity)) if quantity else Decimal("0")
-        total_supplies_cost += cost
-        supplies_rows.append(
-            {
-                "supply_batch_id": batch_id,
-                "quantity_used": quantity,
-                "unit_cost": unit_cost,
-                "total_cost": cost,
-            }
-        )
-
-    total_sale_amount += _to_decimal(payload.get("customer_shipping_charged"))
-    actual_postage_cost = _to_decimal(payload.get("actual_postage_cost"))
-    platform_fees = _to_decimal(payload.get("platform_fees"))
-
-    total_profit = (
-        total_sale_amount
-        - total_cost_of_goods
-        - actual_postage_cost
-        - platform_fees
-        - total_supplies_cost
-    )
-
-    with connection_cursor(commit=True) as cur:
-        cur.execute(
-            """
-            INSERT INTO sale_events (
-                sale_date, platform, customer_shipping_charged, actual_postage_cost,
-                platform_fees, total_sale_amount, total_cost_of_goods,
-                total_supplies_cost_for_sale, total_profit_loss, notes
+            sale_items_rows.append(
+                {
+                    "inventory_type": inventory_type,
+                    "inventory_id": inventory_id,
+                    "item_name": record.get("name"),
+                    "set_code": record.get("set_code"),
+                    "quantity": quantity,
+                    "sale_price_per_unit": sale_price_each,
+                    "acquisition_price_per_unit": acquisition_price,
+                    "profit_loss": (sale_price_each - acquisition_price) * Decimal(quantity),
+                }
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id
-            """,
-            [
-                sale_date,
-                payload.get("platform"),
-                _to_decimal(payload.get("customer_shipping_charged")),
-                actual_postage_cost,
-                platform_fees,
-                total_sale_amount,
-                total_cost_of_goods,
-                total_supplies_cost,
-                total_profit,
-                payload.get("notes"),
-            ],
+
+        total_supplies_cost = Decimal("0")
+        supplies_rows: List[Dict[str, Any]] = []
+        for supply in supplies:
+            try:
+                batch_id = int(supply.get("supply_batch_id"))
+                quantity = int(supply.get("quantity_used", 0))
+            except (TypeError, ValueError):
+                continue
+            if quantity <= 0:
+                continue
+            cost = self._consume_supply(batch_id, quantity)
+            unit_cost = (cost / Decimal(quantity)) if quantity else Decimal("0")
+            total_supplies_cost += cost
+            supplies_rows.append(
+                {
+                    "supply_batch_id": batch_id,
+                    "quantity_used": quantity,
+                    "unit_cost": unit_cost,
+                    "total_cost": cost,
+                }
+            )
+
+        total_sale_amount += _to_decimal(payload.get("customer_shipping_charged"))
+        actual_postage_cost = _to_decimal(payload.get("actual_postage_cost"))
+        platform_fees = _to_decimal(payload.get("platform_fees"))
+
+        total_profit = (
+            total_sale_amount
+            - total_cost_of_goods
+            - actual_postage_cost
+            - platform_fees
+            - total_supplies_cost
         )
-        sale_event_id = cur.fetchone()["id"]
 
-    sale_item_columns = [col for col in self._get_sale_item_columns() if col != "id"]
-    column_order = [
-        "sale_event_id",
-        "item_type",
-        "item_id",
-        "inventory_type",
-        "inventory_id",
-        "item_name",
-        "set_code",
-        "quantity",
-        "sale_price_per_unit",
-        "acquisition_price_per_unit",
-        "profit_loss",
-    ]
-
-    for item_row in sale_items_rows:
-        self._adjust_inventory_quantity(
-            item_row["inventory_type"], item_row["inventory_id"], -item_row["quantity"]
-        )
-        base_map = {
-            "sale_event_id": sale_event_id,
-            "item_type": item_row["inventory_type"],
-            "item_id": item_row["inventory_id"],
-            "item_name": item_row["item_name"],
-            "set_code": item_row["set_code"],
-            "quantity": item_row["quantity"],
-            "sale_price_per_unit": item_row["sale_price_per_unit"],
-            "acquisition_price_per_unit": item_row["acquisition_price_per_unit"],
-            "profit_loss": item_row["profit_loss"],
-            "inventory_type": item_row["inventory_type"],
-            "inventory_id": item_row["inventory_id"],
-        }
-        insert_columns = [col for col in column_order if col in sale_item_columns]
-        placeholders = ", ".join(["%s"] * len(insert_columns))
-        values = [base_map.get(col) for col in insert_columns]
-        sql = f"INSERT INTO sale_items ({', '.join(insert_columns)}) VALUES ({placeholders})"
-        with connection_cursor(commit=True) as cur:
-            cur.execute(sql, values)
-
-    for supply_row in supplies_rows:
         with connection_cursor(commit=True) as cur:
             cur.execute(
                 """
-                INSERT INTO sale_supplies (
-                    sale_event_id, supply_batch_id, quantity_used, unit_cost, total_cost
+                INSERT INTO sale_events (
+                    sale_date, platform, customer_shipping_charged, actual_postage_cost,
+                    platform_fees, total_sale_amount, total_cost_of_goods,
+                    total_supplies_cost_for_sale, total_profit_loss, notes
                 )
-                VALUES (%s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
                 """,
                 [
-                    sale_event_id,
-                    supply_row["supply_batch_id"],
-                    supply_row["quantity_used"],
-                    supply_row["unit_cost"],
-                    supply_row["total_cost"],
+                    sale_date,
+                    payload.get("platform"),
+                    _to_decimal(payload.get("customer_shipping_charged")),
+                    actual_postage_cost,
+                    platform_fees,
+                    total_sale_amount,
+                    total_cost_of_goods,
+                    total_supplies_cost,
+                    total_profit,
+                    payload.get("notes"),
                 ],
             )
+            sale_event_id = cur.fetchone()["id"]
 
-    return sale_event_id
+        sale_item_columns = [col for col in self._get_sale_item_columns() if col != "id"]
+        column_order = [
+            "sale_event_id",
+            "item_type",
+            "item_id",
+            "inventory_type",
+            "inventory_id",
+            "item_name",
+            "set_code",
+            "quantity",
+            "sale_price_per_unit",
+            "acquisition_price_per_unit",
+            "profit_loss",
+        ]
+
+        for item_row in sale_items_rows:
+            self._adjust_inventory_quantity(
+                item_row["inventory_type"], item_row["inventory_id"], -item_row["quantity"]
+            )
+            base_map = {
+                "sale_event_id": sale_event_id,
+                "item_type": item_row["inventory_type"],
+                "item_id": item_row["inventory_id"],
+                "item_name": item_row["item_name"],
+                "set_code": item_row["set_code"],
+                "quantity": item_row["quantity"],
+                "sale_price_per_unit": item_row["sale_price_per_unit"],
+                "acquisition_price_per_unit": item_row["acquisition_price_per_unit"],
+                "profit_loss": item_row["profit_loss"],
+                "inventory_type": item_row["inventory_type"],
+                "inventory_id": item_row["inventory_id"],
+            }
+            insert_columns = [col for col in column_order if col in sale_item_columns]
+            placeholders = ", ".join(["%s"] * len(insert_columns))
+            values = [base_map.get(col) for col in insert_columns]
+            sql = f"INSERT INTO sale_items ({', '.join(insert_columns)}) VALUES ({placeholders})"
+            with connection_cursor(commit=True) as cur:
+                cur.execute(sql, values)
+
+        for supply_row in supplies_rows:
+            with connection_cursor(commit=True) as cur:
+                cur.execute(
+                    """
+                    INSERT INTO sale_supplies (
+                        sale_event_id, supply_batch_id, quantity_used, unit_cost, total_cost
+                    )
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    [
+                        sale_event_id,
+                        supply_row["supply_batch_id"],
+                        supply_row["quantity_used"],
+                        supply_row["unit_cost"],
+                        supply_row["total_cost"],
+                    ],
+                )
+
+        return sale_event_id
 
 
+
+    
 def _restock_from_sale_items(self, sale_event_id: int) -> None:
     sale_item_columns = self._get_sale_item_columns()
     select_columns = []
@@ -1110,8 +1112,6 @@ def _restock_from_sale_items(self, sale_event_id: int) -> None:
             "current_month_profit": _to_decimal(sale_metrics["current_month_profit"]),
             "total_supplies_cost": _to_decimal(sale_metrics["supplies_cost"]),
         }
-
-
 if __name__ == "__main__":
     initialize_database()
     print("Database schema ensured.")
